@@ -21,3 +21,6 @@ implementing anything; it takes precedence over this file.
 6. **No new dependencies** unless the plan lists them and the owner has approved them.
 7. **Verify, don't invent.** Do not use APIs, library options or configuration keys you are not sure
    exist. Say so and check the official documentation instead.
+8. For Next.js code, follow apps/web/AGENTS.md: read the relevant guide
+   in node_modules/next/dist/docs for the installed version before
+   writing code. Do not rely on memory of older Next.js versions.
