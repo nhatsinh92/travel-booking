@@ -13,6 +13,7 @@
 ### Session 2026-10-29
 
 - Q: With a fixed sample dataset, how should "no hotels available for the city and dates" happen? → A: Each hotel has one or more unavailable date ranges in the sample data; a hotel is excluded if the stay overlaps one.
+- Q: Should the number of guests affect which hotels are returned? → A: Yes. Each hotel has a maximum guest capacity; a hotel is returned only when its capacity is at least the requested number of guests.
 
 ## User Scenarios & Testing *(mandatory)*
 
@@ -29,6 +30,7 @@ An employee planning a business trip enters a city, a check-in date, a check-out
 1. **Given** a city that exists in the hotel data, valid future dates and a valid guest count, **When** the user submits the search, **Then** a list of available hotels in that city is shown, each with name, star rating, price per night and an image.
 2. **Given** a valid search was just performed, **When** the user changes the dates and searches again, **Then** the results are replaced with those for the new search.
 3. **Given** the user is not signed in (no login exists), **When** they open the search, **Then** they can search without any authentication step.
+4. **Given** some hotels in the city have a maximum guest capacity below the requested number of guests, **When** the user submits the search, **Then** those hotels are not shown.
 
 ---
 
@@ -59,6 +61,7 @@ After searching, the employee narrows the results by price range and star rating
 - No hotels available for the city and dates: the user sees an empty state suggesting different dates.
 - Filters remove all results: the user sees an empty state with an option to clear filters.
 - A required field (city, either date, guests) is left empty: the search is not performed and the user sees which field is missing.
+- Minimum price greater than maximum price: the results are not filtered and the user sees a message that the price range is invalid.
 
 ## Requirements *(mandatory)*
 
@@ -70,16 +73,18 @@ After searching, the employee narrows the results by price range and star rating
 - **FR-004**: System MUST NOT perform a search, and MUST tell the user the check-in date must be today or later, when check-in is in the past.
 - **FR-005**: System MUST NOT perform a search, and MUST show the allowed range, when guests is below 1 or above the allowed maximum.
 - **FR-006**: System MUST show a "no matching city" message prompting the user to check the spelling when the city is not found.
-- **FR-007**: System MUST exclude a hotel from results when the requested stay overlaps any of its unavailable date ranges, and MUST show an empty state suggesting different dates when no hotels remain for the city and dates.
+- **FR-007**: System MUST exclude a hotel from results when the requested stay overlaps any of its unavailable date ranges, and MUST show an empty state suggesting different dates when no hotels remain for the city and dates and no filter is active.
 - **FR-008**: Users MUST be able to filter results by price range and by star rating.
-- **FR-009**: System MUST show an empty state with an option to clear filters when filters remove all results.
+- **FR-009**: System MUST show an empty state with an option to clear filters when no hotels remain and at least one filter is active.
 - **FR-010**: Users MUST be able to sort results by price and by star rating.
 - **FR-011**: Users MUST be able to load more results when the list is long, keeping current filters and sort.
 - **FR-012**: System MUST require city, check-in, check-out and guests before searching and indicate any missing field.
+- **FR-013**: System MUST return only hotels whose maximum guest capacity is at least the requested number of guests.
+- **FR-014**: System MUST reject a minimum price greater than the maximum price and tell the user the price range is invalid.
 
 ### Key Entities
 
-- **Hotel**: A lodging in a city. Attributes: name, city, star rating, price per night, image, unavailable date ranges (zero or more).
+- **Hotel**: A lodging in a city. Attributes: name, city, star rating, price per night, image, maximum guest capacity, unavailable date ranges (zero or more).
 - **Search Criteria**: City, check-in date, check-out date, number of guests.
 - **Result Refinements**: Price range, star rating filter, sort order (by price or star rating).
 
@@ -99,6 +104,9 @@ After searching, the employee narrows the results by price range and star rating
 - Availability is determined by each hotel's unavailable date ranges in the sample dataset; price per night is a single amount in one currency.
 - The star-rating filter is a minimum star rating (e.g., "3 stars and up").
 - Results are shown in a default order (lowest price first) until the user chooses a sort.
+- Sort options are price ascending, price descending, star rating descending and star rating ascending; ties are broken consistently.
+- Which empty state appears is decided by whether a filter is active: with a filter, the clear-filters state; without, the different-dates state.
+- A stay occupies the nights from check-in up to, but not including, the check-out day, so a stay may begin on the day another period of unavailability ends.
 - Changing search criteria and searching again resets filters and sort.
 - Each page of results shows a fixed number of hotels, with "load more" appending the next set.
 - Out of scope: booking, hotel detail page, login, travel policy, AI assistant.
