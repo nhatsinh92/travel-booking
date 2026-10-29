@@ -56,7 +56,7 @@ These go beyond what the spec and the original input state. Per the constitution
 | II. Contract-First | OpenAPI generated from backend code (springdoc); frontend uses a generated client; no hand-written API types. The error shape is part of the OpenAPI document too. | PASS |
 | III. Test Every Acceptance Criterion | [Test coverage map](#test-coverage-map) maps every acceptance scenario and edge case to at least one automated test. | PASS |
 | IV. Simplicity | One Spring Boot application, no broker, no microservices, no cache, no ORM. | PASS |
-| V. AI Code Contract | Every new dependency is listed for approval below; assumptions are stated above. No dependency is added until you approve. | PASS (pending approval) |
+| V. AI Code Contract | Every new dependency is listed for approval below; assumptions are stated above. The dependency table was approved by the project owner. | PASS |
 
 Post-design re-check (after Phase 1): unchanged, still PASS. No Complexity Tracking entries are needed.
 
@@ -156,7 +156,7 @@ apps/
 
 - Endpoint: `GET /api/v1/hotels/search` with query params `city`, `checkIn`, `checkOut`, `guests`, `minPrice`, `maxPrice`, `minStars`, `sort`, `cursor`. Page size is fixed at 20 and is not a parameter.
 - Success response: `{ items: [{ id, name, starRating, pricePerNightCents, currency, imageUrl }], nextCursor }`. `nextCursor` is `null` on the last page.
-- Error response: `application/problem+json` (Spring `ProblemDetail`) with `code` and an `errors` array of `{ field, code, meta }`, so several violations are reported in one response. Codes: `REQUIRED`, `INVALID_DATE_RANGE`, `CHECK_IN_IN_PAST`, `GUESTS_OUT_OF_RANGE`, `INVALID_PRICE_RANGE`, `INVALID_STARS`, `INVALID_SORT`, `INVALID_CURSOR`, `CITY_NOT_FOUND`. Validation failures return HTTP 400; `CITY_NOT_FOUND` returns 404. No search query runs when validation fails. The top-level `code` repeats the `code` of the first entry in `errors`; there is no separate aggregate code.
+- Error response: `application/problem+json` (Spring `ProblemDetail`) with `code` and an `errors` array of `{ field, code, meta }`, so several violations are reported in one response. Codes: `REQUIRED` (missing or blank), `INVALID_VALUE` (wrong format, for example an impossible date or a non-numeric number), `INVALID_DATE_RANGE`, `CHECK_IN_IN_PAST`, `GUESTS_OUT_OF_RANGE`, `INVALID_PRICE_RANGE`, `INVALID_STARS`, `INVALID_SORT`, `INVALID_CURSOR`, `CITY_NOT_FOUND`. Validation failures return HTTP 400; `CITY_NOT_FOUND` returns 404. No search query runs when validation fails. The top-level `code` repeats the `code` of the first entry in `errors`; there is no separate aggregate code.
 - Keyset pagination: ordered by the chosen sort column then hotel id. The opaque cursor holds the last row's sort value, its id and the sort it belongs to; a cursor used with a different sort is rejected as `INVALID_CURSOR`.
 - Full detail in [contracts/search-api.openapi.yaml](contracts/search-api.openapi.yaml).
 
@@ -199,13 +199,14 @@ apps/
 | EC no hotels for city and dates | ✓ (overlap, boundary-day cases) | ✓ (empty state, shown when no filter is active) | ✓ (blackout city) |
 | EC filters remove all results | ✓ | ✓ (empty state with clear filters, shown when a filter is active) | |
 | EC required field empty | ✓ | ✓ | |
+| FR-015 / EC value in the wrong format | ✓ | ✓ (message names the field) | |
 | FR-014 / EC minimum price above maximum price | ✓ | ✓ | |
 | SC-001 / SC-002 timing | measured per quickstart | | sanity assertion (under 2 s) |
 | SC-003 invalid inputs blocked | ✓ (no query executed) | ✓ | |
 
 ## Dependencies for Approval
 
-Nothing below is installed until you approve.
+**Approved by the project owner**: every dependency in the tables below, including the client generator. No dependency outside these tables may be added without a plan change and approval.
 
 ### apps/api (Gradle)
 

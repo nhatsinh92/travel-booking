@@ -91,6 +91,7 @@ components:
           type: string
           enum:
             - REQUIRED
+            - INVALID_VALUE
             - INVALID_DATE_RANGE
             - CHECK_IN_IN_PAST
             - GUESTS_OUT_OF_RANGE

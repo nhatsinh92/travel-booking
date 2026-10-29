@@ -62,6 +62,7 @@ After searching, the employee narrows the results by price range and star rating
 - Filters remove all results: the user sees an empty state with an option to clear filters.
 - A required field (city, either date, guests) is left empty: the search is not performed and the user sees which field is missing.
 - Minimum price greater than maximum price: the results are not filtered and the user sees a message that the price range is invalid.
+- A value in the wrong format (for example an impossible date or a non-numeric guest count): the search is not performed; the user sees which field is invalid.
 
 ## Requirements *(mandatory)*
 
@@ -81,6 +82,7 @@ After searching, the employee narrows the results by price range and star rating
 - **FR-012**: System MUST require city, check-in, check-out and guests before searching and indicate any missing field.
 - **FR-013**: System MUST return only hotels whose maximum guest capacity is at least the requested number of guests.
 - **FR-014**: System MUST reject a minimum price greater than the maximum price and tell the user the price range is invalid.
+- **FR-015**: System MUST NOT perform a search, and MUST tell the user which field is invalid, when a value is in the wrong format (for example an impossible date or a non-numeric number of guests). A missing or blank value is reported as missing (FR-012), not as invalid.
 
 ### Key Entities
 

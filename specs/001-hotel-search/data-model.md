@@ -64,6 +64,7 @@ A stay `[checkIn, checkOut)` conflicts when `start_date < checkOut AND end_date 
 | Rule | Error code | HTTP | Spec |
 |------|-----------|------|------|
 | `city`, `checkIn`, `checkOut` or `guests` missing or blank | `REQUIRED` | 400 | FR-012 |
+| any supplied value in the wrong format (impossible or unparseable date, non-numeric `guests`, `minPrice`, `maxPrice` or `minStars`); the error names the field | `INVALID_VALUE` | 400 | FR-015 |
 | `checkOut` on or before `checkIn` | `INVALID_DATE_RANGE` | 400 | FR-003 |
 | `checkIn` before today (server clock, configured zone) | `CHECK_IN_IN_PAST` | 400 | FR-004 |
 | `guests` below 1 or above the configured maximum (10); `meta` carries `min` and `max` | `GUESTS_OUT_OF_RANGE` | 400 | FR-005 |
