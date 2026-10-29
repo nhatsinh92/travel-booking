@@ -41,7 +41,7 @@ These go beyond what the spec and the original input state. Per the constitution
 5. **Sort options**: price ascending, price descending, stars descending, stars ascending. Default is price ascending. Ties are broken by hotel id.
 6. **Price unit**: one currency (USD), stored and returned as integer cents. The UI shows dollars.
 7. **Price range validation**: `minPrice` greater than `maxPrice` is rejected as invalid input. The spec does not list this case; the plan adds it as a validation error.
-8. **Empty-state choice** is made by the frontend: empty results with any filter active show the "clear filters" state; empty results with no filters show the "try different dates" state. The API returns no total count.
+8. **Empty-state choice** is made by the frontend: empty results with any filter active show the "clear filters" state; empty results with no filters show the "try different dates or a smaller number of guests" state. The API returns no total count.
 9. **Hotel images** are small static files served by the web app (not remote URLs), so the app works offline and image loading adds no external dependency.
 10. **Seed cities**: Hanoi, Ho Chi Minh City, Da Nang, Singapore, Bangkok. Say if you want different ones.
 11. **"Load more" state is not stored in the URL.** Back/refresh returns to the first page of the same search; criteria, filters and sort are in the URL.

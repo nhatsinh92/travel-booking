@@ -6,6 +6,8 @@ Run after implementation. Commands assume the repository root; the layout comes 
 
 - Docker (database and backend tests), Java 21, Node.js LTS, pnpm.
 
+Shell note: commands are shown for bash (Git Bash). On Windows PowerShell use `Invoke-RestMethod` (or `curl.exe`, because `curl` is an alias for `Invoke-WebRequest` there); PowerShell variants are given where they differ.
+
 ## 1. Start the database
 
 ```bash
@@ -24,10 +26,19 @@ Expected: Flyway applies V1 (schema) and V2 (seed); the API listens on its confi
 
 ## 3. Check the API directly
 
-Valid search (use dates in the future):
+Valid search (dates relative to today, so the guide does not expire):
 
 ```bash
-curl -s "http://localhost:8080/api/v1/hotels/search?city=Hanoi&checkIn=2027-03-10&checkOut=2027-03-12&guests=2"
+IN=$(date -d '+30 days' +%F); OUT=$(date -d '+32 days' +%F)
+curl -s "http://localhost:8080/api/v1/hotels/search?city=Hanoi&checkIn=$IN&checkOut=$OUT&guests=2"
+```
+
+PowerShell:
+
+```powershell
+$in  = (Get-Date).AddDays(30).ToString('yyyy-MM-dd')
+$out = (Get-Date).AddDays(32).ToString('yyyy-MM-dd')
+Invoke-RestMethod "http://localhost:8080/api/v1/hotels/search?city=Hanoi&checkIn=$in&checkOut=$out&guests=2"
 ```
 
 Expected: 20 items sorted by price ascending, each with `name`, `starRating`, `pricePerNightCents`, `imageUrl`, and a non-null `nextCursor` (about 50 hotels in the city).
@@ -40,6 +51,7 @@ Invalid inputs, each expected to return the stated HTTP status with `application
 | `checkIn` in the past | 400 | `CHECK_IN_IN_PAST` |
 | `guests=0` or `guests=11` | 400 | `GUESTS_OUT_OF_RANGE` (meta `min` 1, `max` 10) |
 | omit `city` | 400 | `REQUIRED` |
+| `checkIn=2027-13-45` or `guests=abc` | 400 | `INVALID_VALUE` (names the field) |
 | `city=Hanio` | 404 | `CITY_NOT_FOUND` |
 
 Guest capacity: repeating the valid search with `guests=10` returns fewer hotels than with `guests=2` (and still at least one); every returned hotel can accommodate the requested guests.
@@ -60,7 +72,7 @@ Open `http://localhost:3000/search`.
 2. Refresh, then open the URL in a new tab. Expected: the same results.
 3. **US2**: Set a price range and a minimum star rating, then change the sort. Expected: the list and URL update; back button restores the previous state.
 4. Click "load more" at the end of the list. Expected: the next 20 hotels are appended with filters and sort unchanged.
-5. **Edge cases**: submit each invalid input from step 3 in the form. Expected: the exact messages in the spec. Search an unknown city, the blackout window, and a price range that matches nothing. Expected: "no matching city", "try different dates", and "clear filters" states.
+5. **Edge cases**: submit each invalid input from step 3 in the form. Expected: the exact messages in the spec. Search an unknown city, the blackout window, and a price range that matches nothing. Expected: "no matching city", "try different dates or fewer guests", and "clear filters" states.
 
 ## 6. Run the automated tests
 
@@ -74,11 +86,9 @@ Expected: all pass. The coverage map in [plan.md](plan.md#test-coverage-map) lis
 
 ## 7. Measure performance (SC-001, SC-002)
 
-```bash
-for i in $(seq 1 50); do curl -s -o /dev/null -w "%{time_total}\n" "http://localhost:8080/api/v1/hotels/search?city=Hanoi&checkIn=2027-03-10&checkOut=2027-03-12&guests=2"; done | sort -n | tail -3
-```
+Use the PowerShell commands in [tasks.md](tasks.md#baseline-performance-commands-powershell) (section "Baseline performance commands (PowerShell)"). They time four scenarios (search, filters plus sort, second page, server-rendered page) with dates relative to today.
 
-Expected: the slowest requests are well under 2 seconds; the Playwright test additionally asserts results are visible in the browser within 2 seconds. Record the numbers. If they are not comfortably under target, investigate (`EXPLAIN` on the search query) before considering any caching, which is a separate change.
+Expected: p95 is well under 2 seconds in every scenario; the Playwright test additionally asserts results are visible in the browser within 2 seconds. Record the numbers. If they are not comfortably under target, investigate (`EXPLAIN` on the search query) before considering any caching, which is a separate change.
 
 ## 8. Contract refresh (when the API changes)
 

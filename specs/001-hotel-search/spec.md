@@ -4,7 +4,7 @@
 
 **Created**: 2026-10-29
 
-**Status**: Draft
+**Status**: Approved
 
 **Input**: User description: "Employees search for hotels for business trips quickly, by city and dates. P1: search by city, check-in date, check-out date and number of guests; each result shows hotel name, star rating, price per night and an image. P2: filter by price range and star rating, sort by price or star rating, load more results when the list is long. Out of scope: booking, hotel detail page, login, travel policy, AI assistant."
 
@@ -58,10 +58,10 @@ After searching, the employee narrows the results by price range and star rating
 - Check-in date in the past: the search is not performed; the user sees a message that the date must be today or later.
 - Number of guests below 1 or above the allowed maximum: the search is not performed; the user sees the allowed range.
 - City not found: the user sees a "no matching city" message with a prompt to check the spelling.
-- No hotels available for the city and dates: the user sees an empty state suggesting different dates.
+- No hotels available for the city, dates and number of guests: the user sees an empty state suggesting different dates or a smaller number of guests.
 - Filters remove all results: the user sees an empty state with an option to clear filters.
 - A required field (city, either date, guests) is left empty: the search is not performed and the user sees which field is missing.
-- Minimum price greater than maximum price: the results are not filtered and the user sees a message that the price range is invalid.
+- Minimum price greater than maximum price: the search is not performed; the user sees a message that the price range is invalid.
 - A value in the wrong format (for example an impossible date or a non-numeric guest count): the search is not performed; the user sees which field is invalid.
 
 ## Requirements *(mandatory)*
@@ -74,11 +74,11 @@ After searching, the employee narrows the results by price range and star rating
 - **FR-004**: System MUST NOT perform a search, and MUST tell the user the check-in date must be today or later, when check-in is in the past.
 - **FR-005**: System MUST NOT perform a search, and MUST show the allowed range, when guests is below 1 or above the allowed maximum.
 - **FR-006**: System MUST show a "no matching city" message prompting the user to check the spelling when the city is not found.
-- **FR-007**: System MUST exclude a hotel from results when the requested stay overlaps any of its unavailable date ranges, and MUST show an empty state suggesting different dates when no hotels remain for the city and dates and no filter is active.
+- **FR-007**: System MUST exclude a hotel from results when the requested stay overlaps any of its unavailable date ranges, and MUST show an empty state suggesting different dates or a smaller number of guests when no hotels remain for the city, dates and number of guests and no filter is active.
 - **FR-008**: Users MUST be able to filter results by price range and by star rating.
 - **FR-009**: System MUST show an empty state with an option to clear filters when no hotels remain and at least one filter is active.
 - **FR-010**: Users MUST be able to sort results by price and by star rating.
-- **FR-011**: Users MUST be able to load more results when the list is long, keeping current filters and sort.
+- **FR-011**: Users MUST be able to load more results when more than 20 hotels match (20 hotels are shown per page), keeping current filters and sort.
 - **FR-012**: System MUST require city, check-in, check-out and guests before searching and indicate any missing field.
 - **FR-013**: System MUST return only hotels whose maximum guest capacity is at least the requested number of guests.
 - **FR-014**: System MUST reject a minimum price greater than the maximum price and tell the user the price range is invalid.
@@ -94,7 +94,7 @@ After searching, the employee narrows the results by price range and star rating
 
 ### Measurable Outcomes
 
-- **SC-001**: For a typical search, users see results within 2 seconds of submitting.
+- **SC-001**: For a typical search (one city, a stay of two nights, any valid number of guests), users see results within 2 seconds of submitting.
 - **SC-002**: Applying a filter or changing the sort updates the visible list within 2 seconds.
 - **SC-003**: 100% of the invalid inputs listed in the edge cases are blocked before a search runs and show the specified message.
 
@@ -107,8 +107,8 @@ After searching, the employee narrows the results by price range and star rating
 - The star-rating filter is a minimum star rating (e.g., "3 stars and up").
 - Results are shown in a default order (lowest price first) until the user chooses a sort.
 - Sort options are price ascending, price descending, star rating descending and star rating ascending; ties are broken consistently.
-- Which empty state appears is decided by whether a filter is active: with a filter, the clear-filters state; without, the different-dates state.
+- Which empty state appears is decided by whether a filter is active: with a filter, the clear-filters state; without, the no-availability state.
 - A stay occupies the nights from check-in up to, but not including, the check-out day, so a stay may begin on the day another period of unavailability ends.
 - Changing search criteria and searching again resets filters and sort.
-- Each page of results shows a fixed number of hotels, with "load more" appending the next set.
+- Each page of results shows 20 hotels, with "load more" appending the next 20.
 - Out of scope: booking, hotel detail page, login, travel policy, AI assistant.
