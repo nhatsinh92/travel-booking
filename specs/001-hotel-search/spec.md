@@ -6,6 +6,8 @@
 
 **Status**: Approved
 
+**Revision note**: After approval, FR-016 (loading placeholder, later extended to the load-more button) was added and the wording of User Story 2 acceptance scenario 2 was changed to state the minimum star rating, both on the project owner's decision (2026-10-29).
+
 **Input**: User description: "Employees search for hotels for business trips quickly, by city and dates. P1: search by city, check-in date, check-out date and number of guests; each result shows hotel name, star rating, price per night and an image. P2: filter by price range and star rating, sort by price or star rating, load more results when the list is long. Out of scope: booking, hotel detail page, login, travel policy, AI assistant."
 
 ## Clarifications
@@ -45,7 +47,7 @@ After searching, the employee narrows the results by price range and star rating
 **Acceptance Scenarios**:
 
 1. **Given** search results are shown, **When** the user sets a price range, **Then** only hotels whose price per night falls within the range are shown.
-2. **Given** search results are shown, **When** the user filters by star rating, **Then** only hotels matching the selected star rating are shown.
+2. **Given** search results are shown, **When** the user filters by star rating, **Then** only hotels at or above the selected minimum star rating are shown.
 3. **Given** search results are shown, **When** the user sorts by price or by star rating, **Then** the list is ordered accordingly.
 4. **Given** more matching hotels exist than are currently displayed, **When** the user chooses to load more, **Then** additional results are appended without losing the current filters and sort.
 5. **Given** filters and sort are applied, **When** the user changes the search criteria and searches again, **Then** results reflect the new search and filters and sort are reset (see Assumptions).
@@ -83,6 +85,7 @@ After searching, the employee narrows the results by price range and star rating
 - **FR-013**: System MUST return only hotels whose maximum guest capacity is at least the requested number of guests.
 - **FR-014**: System MUST reject a minimum price greater than the maximum price and tell the user the price range is invalid.
 - **FR-015**: System MUST NOT perform a search, and MUST tell the user which field is invalid, when a value is in the wrong format (for example an impossible date or a non-numeric number of guests). A missing or blank value is reported as missing (FR-012), not as invalid.
+- **FR-016**: While the results of a search, or of a change to filters or sort, are loading, the system MUST show a loading placeholder in place of the results. While more results are loading after the user chooses to load more, the load-more button MUST read "Loading…" and be disabled.
 
 ### Key Entities
 
