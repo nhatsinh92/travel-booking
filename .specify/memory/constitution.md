@@ -1,50 +1,45 @@
-# [PROJECT_NAME] Constitution
-<!-- Example: Spec Constitution, TaskFlow Constitution, etc. -->
+# TripDesk Constitution
+
+TripDesk is a learning and portfolio project: a corporate business-travel hotel booking platform,
+built by one developer with AI assistance. It is not a production system, and infrastructure
+budget is near zero.
 
 ## Core Principles
 
-### [PRINCIPLE_1_NAME]
-<!-- Example: I. Library-First -->
-[PRINCIPLE_1_DESCRIPTION]
-<!-- Example: Every feature starts as a standalone library; Libraries must be self-contained, independently testable, documented; Clear purpose required - no organizational-only libraries -->
+### I. Spec-First
+Code MUST NOT be written without a spec under `specs/`. At merge time the spec MUST describe the
+implemented behavior.
+Rationale: the spec stays the trustworthy description of the system, for the developer and the AI.
 
-### [PRINCIPLE_2_NAME]
-<!-- Example: II. CLI Interface -->
-[PRINCIPLE_2_DESCRIPTION]
-<!-- Example: Every library exposes functionality via CLI; Text in/out protocol: stdin/args → stdout, errors → stderr; Support JSON + human-readable formats -->
+### II. Contract-First
+The backend OpenAPI document MUST be the single source of truth for the API. The frontend MUST use
+a TypeScript client generated from it and MUST NOT hand-write API types.
+Rationale: one contract prevents frontend/backend drift.
 
-### [PRINCIPLE_3_NAME]
-<!-- Example: III. Test-First (NON-NEGOTIABLE) -->
-[PRINCIPLE_3_DESCRIPTION]
-<!-- Example: TDD mandatory: Tests written → User approved → Tests fail → Then implement; Red-Green-Refactor cycle strictly enforced -->
+### III. Test Every Acceptance Criterion
+Every acceptance criterion in a spec MUST have at least one automated test.
+Rationale: criteria that no test checks cannot be trusted as done.
 
-### [PRINCIPLE_4_NAME]
-<!-- Example: IV. Integration Testing -->
-[PRINCIPLE_4_DESCRIPTION]
-<!-- Example: Focus areas requiring integration tests: New library contract tests, Contract changes, Inter-service communication, Shared schemas -->
+### IV. Simplicity
+The backend MUST stay basic: a single Spring Boot application, with no message brokers or
+microservices.
+Rationale: one developer and a near-zero budget cannot carry distributed-system overhead.
 
-### [PRINCIPLE_5_NAME]
-<!-- Example: V. Observability, VI. Versioning & Breaking Changes, VII. Simplicity -->
-[PRINCIPLE_5_DESCRIPTION]
-<!-- Example: Text I/O ensures debuggability; Structured logging required; Or: MAJOR.MINOR.BUILD format; Or: Start simple, YAGNI principles -->
+### V. AI Code Contract
+A new dependency MUST NOT be added without approval in the plan. AI MUST state its assumptions
+instead of guessing.
+Rationale: AI-generated changes stay reviewable, and hidden guesses become visible decisions.
 
-## [SECTION_2_NAME]
-<!-- Example: Additional Constraints, Security Requirements, Performance Standards, etc. -->
+## Stack & Scope
 
-[SECTION_2_CONTENT]
-<!-- Example: Technology stack requirements, compliance standards, deployment policies, etc. -->
-
-## [SECTION_3_NAME]
-<!-- Example: Development Workflow, Review Process, Quality Gates, etc. -->
-
-[SECTION_3_CONTENT]
-<!-- Example: Code review requirements, testing gates, deployment approval process, etc. -->
+- Stack: monorepo; Next.js + TypeScript; Java 21 + Spring Boot; PostgreSQL; Redis; Docker Compose.
+- Non-goals: production-grade operations, high availability, real payments.
 
 ## Governance
-<!-- Example: Constitution supersedes all other practices; Amendments require documentation, approval, migration plan -->
 
-[GOVERNANCE_RULES]
-<!-- Example: All PRs/reviews must verify compliance; Complexity must be justified; Use [GUIDANCE_FILE] for runtime development guidance -->
+- This constitution supersedes other practices; plans and reviews SHOULD check compliance with it.
+- Amendments MUST bump the version semantically: MAJOR for removing or redefining a principle,
+  MINOR for adding a principle or materially expanding guidance, PATCH for clarifications.
+- A justified deviation from a principle MAY be recorded in the plan's Complexity Tracking table.
 
-**Version**: [CONSTITUTION_VERSION] | **Ratified**: [RATIFICATION_DATE] | **Last Amended**: [LAST_AMENDED_DATE]
-<!-- Example: Version: 2.1.1 | Ratified: 2025-06-13 | Last Amended: 2025-07-16 -->
+**Version**: 1.0.0 | **Ratified**: 2026-10-29 | **Last Amended**: 2026-10-29
