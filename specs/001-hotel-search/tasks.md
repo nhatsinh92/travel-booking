@@ -44,11 +44,11 @@ Presentational components are marked "tested with code" and have their test in t
 
 **Purpose**: Monorepo skeleton from plan.md.
 
-- [ ] T001 Create `infra/docker-compose.yml` with a `postgres:16-alpine` service (named volume, port 5432, healthcheck, database/user/password for local development only), and add ignores for `node_modules/`, `.next/`, `build/`, `.gradle/` and `.env*` (except `.env.example`) to the root `.gitignore`
-- [ ] T002 Initialize `apps/api`: Gradle wrapper and `build.gradle.kts` + `settings.gradle.kts` (Java 21 toolchain, Spring Boot 3.x plugin) with ONLY the dependencies in plan.md's apps/api table, and `src/main/java/com/tripdesk/api/TripDeskApplication.java`; confirm `./gradlew build` succeeds with no tests yet
-- [ ] T003 [P] Initialize `apps/web` with pnpm: Next.js (App Router, TypeScript, ESLint, `src/` directory, no Tailwind) with ONLY the dependencies in plan.md's apps/web table other than the test tools; confirm `pnpm build` and `pnpm lint` succeed
-- [ ] T004 Configure Vitest (after T003) in `apps/web/vitest.config.ts` and `apps/web/src/tests/setup.ts` (jsdom, Testing Library, jest-dom; `test.include` set to `src/tests/unit/**/*.test.{ts,tsx}` and `src/tests/e2e/**` excluded) and add the `test` script to `apps/web/package.json`; confirm `pnpm test` runs (no tests yet is acceptable)
-- [ ] T005 Configure Playwright (after T004) in `apps/web/playwright.config.ts` (`testDir: 'src/tests/e2e'`, `testMatch: '**/*.spec.ts'`, base URL from environment, default `http://localhost:3000`, no `webServer` because the database and API are started separately per quickstart.md) and add the `test:e2e` script to `apps/web/package.json`
+- [X] T001 Create `infra/docker-compose.yml` with a `postgres:16-alpine` service (named volume, port 5432, healthcheck, database/user/password for local development only), and add ignores for `node_modules/`, `.next/`, `build/`, `.gradle/` and `.env*` (except `.env.example`) to the root `.gitignore`
+- [X] T002 Initialize `apps/api`: Gradle wrapper and `build.gradle.kts` + `settings.gradle.kts` (Java 21 toolchain, Spring Boot 3.x plugin) with ONLY the dependencies in plan.md's apps/api table, and `src/main/java/com/tripdesk/api/TripDeskApplication.java`; confirm `./gradlew build` succeeds with no tests yet
+- [X] T003 [P] Initialize `apps/web` with pnpm: Next.js (App Router, TypeScript, ESLint, `src/` directory, no Tailwind) with ONLY the dependencies in plan.md's apps/web table other than the test tools; confirm `pnpm build` and `pnpm lint` succeed
+- [X] T004 Configure Vitest (after T003) in `apps/web/vitest.config.ts` and `apps/web/src/tests/setup.ts` (jsdom, Testing Library, jest-dom; `test.include` set to `src/tests/unit/**/*.test.{ts,tsx}` and `src/tests/e2e/**` excluded) and add the `test` script to `apps/web/package.json`; confirm `pnpm test` runs (no tests yet is acceptable)
+- [X] T005 Configure Playwright (after T004) in `apps/web/playwright.config.ts` (`testDir: 'src/tests/e2e'`, `testMatch: '**/*.spec.ts'`, base URL from environment, default `http://localhost:3000`, no `webServer` because the database and API are started separately per quickstart.md) and add the `test:e2e` script to `apps/web/package.json`
 
 ---
 
