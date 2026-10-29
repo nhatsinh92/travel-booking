@@ -1,0 +1,24 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: tripdesk-api
+  datasource:
+    url: ${DB_URL:jdbc:postgresql://localhost:5432/tripdesk}
+    username: ${DB_USERNAME:tripdesk}
+    password: ${DB_PASSWORD:tripdesk}
+  flyway:
+    enabled: true
+
+springdoc:
+  api-docs:
+    enabled: true
+  swagger-ui:
+    enabled: false
+
+tripdesk:
+  search:
+    max-guests: 10
+    page-size: 20
+    time-zone: UTC
