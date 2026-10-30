@@ -87,6 +87,12 @@ export interface operations {
                 checkOut: string;
                 /** @description Validated against the configured range (1 to 10); only hotels whose capacity is at least this number are returned */
                 guests: number;
+                /** @description Price per night in cents */
+                minPrice?: number;
+                /** @description Price per night in cents */
+                maxPrice?: number;
+                minStars?: number;
+                sort?: "price_asc" | "price_desc" | "stars_desc" | "stars_asc";
                 /** @description Opaque; use nextCursor from the previous page with unchanged criteria, filters and sort */
                 cursor?: string;
             };

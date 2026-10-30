@@ -57,6 +57,51 @@
             }
           },
           {
+            "name" : "minPrice",
+            "in" : "query",
+            "description" : "Price per night in cents",
+            "required" : false,
+            "schema" : {
+              "type" : "integer",
+              "minimum" : 0
+            }
+          },
+          {
+            "name" : "maxPrice",
+            "in" : "query",
+            "description" : "Price per night in cents",
+            "required" : false,
+            "schema" : {
+              "type" : "integer",
+              "minimum" : 0
+            }
+          },
+          {
+            "name" : "minStars",
+            "in" : "query",
+            "required" : false,
+            "schema" : {
+              "type" : "integer",
+              "maximum" : 5,
+              "minimum" : 1
+            }
+          },
+          {
+            "name" : "sort",
+            "in" : "query",
+            "required" : false,
+            "schema" : {
+              "type" : "string",
+              "default" : "price_asc",
+              "enum" : [
+                "price_asc",
+                "price_desc",
+                "stars_desc",
+                "stars_asc"
+              ]
+            }
+          },
+          {
             "name" : "cursor",
             "in" : "query",
             "description" : "Opaque; use nextCursor from the previous page with unchanged criteria, filters and sort",

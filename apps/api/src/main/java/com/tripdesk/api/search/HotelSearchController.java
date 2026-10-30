@@ -52,9 +52,17 @@ public class HotelSearchController {
                     description = "Validated against the configured range (1 to 10); only hotels whose "
                             + "capacity is at least this number are returned")
             @RequestParam(required = false) String guests,
+            @Parameter(description = "Price per night in cents",
+                    schema = @Schema(type = "integer", minimum = "0"))
             @RequestParam(required = false) String minPrice,
+            @Parameter(description = "Price per night in cents",
+                    schema = @Schema(type = "integer", minimum = "0"))
             @RequestParam(required = false) String maxPrice,
+            @Parameter(schema = @Schema(type = "integer", minimum = "1", maximum = "5"))
             @RequestParam(required = false) String minStars,
+            @Parameter(schema = @Schema(type = "string",
+                    allowableValues = { "price_asc", "price_desc", "stars_desc", "stars_asc" },
+                    defaultValue = "price_asc"))
             @RequestParam(required = false) String sort,
             @Parameter(description = "Opaque; use nextCursor from the previous page with unchanged "
                     + "criteria, filters and sort")
