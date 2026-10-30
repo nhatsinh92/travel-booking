@@ -1,0 +1,21 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: tripdesk-postgres
+    environment:
+      # Local development only. Not for any shared or deployed environment.
+      POSTGRES_DB: tripdesk
+      POSTGRES_USER: tripdesk
+      POSTGRES_PASSWORD: tripdesk
+    ports:
+      - "5432:5432"
+    volumes:
+      - tripdesk-pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U tripdesk -d tripdesk"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+volumes:
+  tripdesk-pgdata:

@@ -1,0 +1,14 @@
+.results {
+  display: grid;
+  gap: 16px;
+  justify-items: start;
+}
+
+.list {
+  display: grid;
+  gap: 16px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  width: 100%;
+}

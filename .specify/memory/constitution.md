@@ -17,8 +17,13 @@ a TypeScript client generated from it and MUST NOT hand-write API types.
 Rationale: one contract prevents frontend/backend drift.
 
 ### III. Test Every Acceptance Criterion
-Every acceptance criterion in a spec MUST have at least one automated test.
-Rationale: criteria that no test checks cannot be trusted as done.
+Every acceptance scenario and edge case in a spec MUST have at least one automated test. Task lists
+MUST include these test tasks, each naming the spec item it covers.
+Logic (the backend, and frontend logic modules) MUST be tested first: its tests are written and
+seen failing before the implementation.
+Presentational UI components MAY be tested together with or right after the code.
+Rationale: criteria that no test checks cannot be trusted as done, and a test never seen failing
+has not been shown to check anything.
 
 ### IV. Simplicity
 The backend MUST stay basic: a single Spring Boot application, with no message brokers or
@@ -42,4 +47,4 @@ Rationale: AI-generated changes stay reviewable, and hidden guesses become visib
   MINOR for adding a principle or materially expanding guidance, PATCH for clarifications.
 - A justified deviation from a principle MAY be recorded in the plan's Complexity Tracking table.
 
-**Version**: 1.0.0 | **Ratified**: 2026-10-29 | **Last Amended**: 2026-10-29
+**Version**: 1.1.0 | **Ratified**: 2026-10-29 | **Last Amended**: 2026-10-29
