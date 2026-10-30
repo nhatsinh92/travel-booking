@@ -91,7 +91,7 @@ Presentational components are marked "tested with code" and have their test in t
 ### Backend implementation (US1)
 
 - [X] T020 [US1] Implement `SearchRequest.java` and `SearchValidator.java` in `apps/api/src/main/java/com/tripdesk/api/search/` using `SearchProperties` and the injected `Clock`; make T016 pass
-- [ ] T021 [US1] Implement `Cursor.java` (opaque base64url of the last row's price value and hotel id) in `apps/api/src/main/java/com/tripdesk/api/search/`; make T017 pass
+- [X] T021 [US1] Implement `Cursor.java` (opaque base64url of the last row's price value and hotel id) in `apps/api/src/main/java/com/tripdesk/api/search/`; make T017 pass
 - [ ] T022 [US1] Implement `HotelSearchRepository.java` with `JdbcClient` in `apps/api/src/main/java/com/tripdesk/api/search/`: city lookup by trimmed `lower(name)`; the availability `NOT EXISTS` check (`start_date < :checkOut AND end_date > :checkIn`), `max_guests >= :guests`, order by `price_per_night_cents, id`, keyset predicate `(price_per_night_cents, id) > (:p, :id)` when a cursor is given, fetch page size + 1 rows to know whether `nextCursor` exists; plus DTO records `HotelResult` and `SearchResponse` in `search/dto/` (`currency` is the constant `USD`); depends on T021
 - [ ] T023 [US1] Implement `HotelSearchService.java` (validate, then city lookup, then query, in that order) and `HotelSearchController.java` (`GET /api/v1/hotels/search`, parameters per contracts/search-api.openapi.yaml; unparseable values become `INVALID_VALUE` for that field and missing or blank values `REQUIRED`, per decision A1) in `apps/api/src/main/java/com/tripdesk/api/search/`; make T018 and T019 pass; depends on T020 and T022
 
