@@ -160,6 +160,13 @@ test.describe('hotel search', () => {
     await expect(resultsAlert(page)).toContainText(/spelling/i);
   });
 
+  test('names the guests field when its value is in the wrong format (EC9)', async ({ page }) => {
+    await page.goto(`/search?city=Hanoi&checkIn=${checkIn}&checkOut=${checkOut}&guests=abc`);
+
+    await expect(resultsAlert(page)).toContainText(/guests.*wrong format/i);
+    await expect(hotelCards(page)).toHaveCount(0);
+  });
+
   test('suggests different dates or fewer guests when nothing is available (EC5)', async ({
     page,
   }) => {

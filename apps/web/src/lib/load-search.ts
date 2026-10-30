@@ -2,6 +2,7 @@ import type { ApiClient } from '@/lib/api/client';
 import type { components } from '@/lib/api/generated/schema';
 import type { FieldError } from '@/lib/error-messages';
 import { hasSearch, parseSearchCriteria, type SearchParamsInput } from '@/lib/search-params';
+import { validateCriteria } from '@/lib/validate-criteria';
 
 export type HotelResult = components['schemas']['HotelResult'];
 
@@ -13,6 +14,13 @@ export type SearchState =
   | { status: 'error'; errors: FieldError[] }
   | { status: 'unavailable' };
 
+// The contract types guests as an integer. Integer text becomes that number; anything else
+// becomes NaN, which the server reports as INVALID_VALUE for the field.
+function guestsToNumber(text: string): number {
+  const trimmed = text.trim();
+  return /^-?\d+$/.test(trimmed) ? Number(trimmed) : Number.NaN;
+}
+
 export async function loadSearch(
   params: SearchParamsInput,
   client: ApiClient,
@@ -20,14 +28,16 @@ export async function loadSearch(
   if (!hasSearch(params)) return { status: 'idle' };
 
   const criteria = parseSearchCriteria(params);
+  // A blank guests value cannot be sent as a number, so blank criteria are reported here.
+  const missing = validateCriteria(criteria).filter((error) => error.code === 'REQUIRED');
+  if (missing.length > 0) return { status: 'error', errors: missing };
+
   try {
     const { data, error, response } = await client.GET('/api/v1/hotels/search', {
       params: {
         query: {
           ...criteria,
-          // Sent as typed (the contract says number) so the server reports a blank guests value
-          // as REQUIRED and a non-numeric one as INVALID_VALUE.
-          guests: criteria.guests as unknown as number,
+          guests: guestsToNumber(criteria.guests),
         },
       },
     });
