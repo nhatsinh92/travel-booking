@@ -6,6 +6,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.tripdesk.api.error.Problem;
+import com.tripdesk.api.error.ServerProblem;
 import com.tripdesk.api.search.dto.SearchResponse;
 
 import io.swagger.v3.oas.annotations.Operation;
@@ -40,6 +41,8 @@ public class HotelSearchController {
             content = @Content(mediaType = PROBLEM_JSON, schema = @Schema(implementation = Problem.class)))
     @ApiResponse(responseCode = "404", description = "City not found (`CITY_NOT_FOUND`)",
             content = @Content(mediaType = PROBLEM_JSON, schema = @Schema(implementation = Problem.class)))
+    @ApiResponse(responseCode = "500", description = "Unexpected failure; the body does not describe the cause",
+            content = @Content(mediaType = PROBLEM_JSON, schema = @Schema(implementation = ServerProblem.class)))
     @GetMapping("/search")
     public SearchResponse search(
             @Parameter(required = true, description = "Matched trimmed, case-insensitive")

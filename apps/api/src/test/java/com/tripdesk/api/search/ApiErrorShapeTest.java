@@ -1,6 +1,9 @@
 package com.tripdesk.api.search;
 
+import static org.hamcrest.Matchers.containsString;
+import static org.hamcrest.Matchers.not;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -34,6 +37,11 @@ class ApiErrorShapeTest {
         @GetMapping("/test/single")
         void single(@RequestParam ErrorCode code) {
             throw new ApiValidationException(List.of(new FieldError("field", code, null)));
+        }
+
+        @GetMapping("/test/boom")
+        void boom() {
+            throw new IllegalStateException("secret internal detail");
         }
 
         @GetMapping("/test/several")
@@ -92,5 +100,23 @@ class ApiErrorShapeTest {
                 .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_PROBLEM_JSON))
                 .andExpect(jsonPath("$.status").value(404))
                 .andExpect(jsonPath("$.code").value("CITY_NOT_FOUND"));
+    }
+
+    @Test
+    void anUnexpectedErrorReturns500AsProblemJsonWithoutInternalDetail() throws Exception {
+        mockMvc.perform(get("/test/boom"))
+                .andExpect(status().isInternalServerError())
+                .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_PROBLEM_JSON))
+                .andExpect(jsonPath("$.status").value(500))
+                .andExpect(jsonPath("$.title").value("Internal server error"))
+                .andExpect(jsonPath("$.code").doesNotExist())
+                .andExpect(jsonPath("$.errors").doesNotExist())
+                .andExpect(content().string(not(containsString("secret internal detail"))));
+    }
+
+    @Test
+    void aFrameworkErrorKeepsItsOwnStatus() throws Exception {
+        mockMvc.perform(post("/test/single").param("code", "REQUIRED"))
+                .andExpect(status().isMethodNotAllowed());
     }
 }

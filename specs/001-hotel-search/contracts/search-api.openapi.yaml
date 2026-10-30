@@ -48,6 +48,11 @@ paths:
           content:
             application/problem+json:
               schema: { $ref: "#/components/schemas/Problem" }
+        "500":
+          description: Unexpected failure; the body does not describe the cause
+          content:
+            application/problem+json:
+              schema: { $ref: "#/components/schemas/ServerProblem" }
 components:
   schemas:
     SearchResponse:
@@ -96,6 +101,14 @@ components:
         errors:
           type: array
           items: { $ref: "#/components/schemas/FieldError" }
+    ServerProblem:
+      type: object
+      required: [title, status]
+      properties:
+        type: { type: string }
+        title: { type: string, example: Internal server error }
+        status: { type: integer, format: int32 }
+        detail: { type: string }
     FieldError:
       type: object
       required: [field, code]

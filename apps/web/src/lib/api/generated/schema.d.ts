@@ -69,6 +69,14 @@ export interface components {
             code: "REQUIRED" | "INVALID_VALUE" | "INVALID_DATE_RANGE" | "CHECK_IN_IN_PAST" | "GUESTS_OUT_OF_RANGE" | "INVALID_PRICE_RANGE" | "INVALID_STARS" | "INVALID_SORT" | "INVALID_CURSOR" | "CITY_NOT_FOUND";
             errors: components["schemas"]["FieldError"][];
         };
+        ServerProblem: {
+            type?: string;
+            /** @example Internal server error */
+            title: string;
+            /** Format: int32 */
+            status: number;
+            detail?: string;
+        };
     };
     responses: never;
     parameters: never;
@@ -129,6 +137,15 @@ export interface operations {
                 };
                 content: {
                     "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Unexpected failure; the body does not describe the cause */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ServerProblem"];
                 };
             };
         };

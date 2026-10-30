@@ -143,6 +143,16 @@
                 }
               }
             }
+          },
+          "500" : {
+            "description" : "Unexpected failure; the body does not describe the cause",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ServerProblem"
+                }
+              }
+            }
           }
         }
       }
@@ -286,6 +296,29 @@
         "required" : [
           "code",
           "errors",
+          "status",
+          "title"
+        ]
+      },
+      "ServerProblem" : {
+        "type" : "object",
+        "properties" : {
+          "type" : {
+            "type" : "string"
+          },
+          "title" : {
+            "type" : "string",
+            "example" : "Internal server error"
+          },
+          "status" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "detail" : {
+            "type" : "string"
+          }
+        },
+        "required" : [
           "status",
           "title"
         ]
