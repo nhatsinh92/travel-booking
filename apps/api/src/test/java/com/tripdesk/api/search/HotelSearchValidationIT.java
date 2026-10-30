@@ -148,6 +148,65 @@ class HotelSearchValidationIT extends AbstractIntegrationTest {
                 .andExpect(jsonPath("$.errors[0].field").value("cursor"));
     }
 
+    /** Valid criteria plus the given refinement parameters (name, value, name, value, ...). */
+    private ResultActions searchWith(String... refinements) throws Exception {
+        MockHttpServletRequestBuilder request = get("/api/v1/hotels/search")
+                .param("city", "Hanoi")
+                .param("checkIn", "2026-11-05")
+                .param("checkOut", "2026-11-07")
+                .param("guests", "2");
+        for (int i = 0; i < refinements.length; i += 2) {
+            request.param(refinements[i], refinements[i + 1]);
+        }
+        return mockMvc.perform(request)
+                .andExpect(status().isBadRequest())
+                .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_PROBLEM_JSON));
+    }
+
+    @Test
+    void aMinimumPriceAboveTheMaximumPriceIsAnInvalidPriceRange() throws Exception {
+        searchWith("minPrice", "20000", "maxPrice", "10000")
+                .andExpect(jsonPath("$.code").value("INVALID_PRICE_RANGE"))
+                .andExpect(jsonPath("$.errors.length()").value(1))
+                .andExpect(jsonPath("$.errors[0].field").value("maxPrice"))
+                .andExpect(jsonPath("$.errors[0].code").value("INVALID_PRICE_RANGE"));
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = { "0", "6" })
+    void aMinimumStarsOutsideOneToFiveIsInvalidStars(String stars) throws Exception {
+        searchWith("minStars", stars)
+                .andExpect(jsonPath("$.code").value("INVALID_STARS"))
+                .andExpect(jsonPath("$.errors.length()").value(1))
+                .andExpect(jsonPath("$.errors[0].field").value("minStars"));
+    }
+
+    @Test
+    void anUnknownSortIsInvalidSort() throws Exception {
+        searchWith("sort", "bogus")
+                .andExpect(jsonPath("$.code").value("INVALID_SORT"))
+                .andExpect(jsonPath("$.errors.length()").value(1))
+                .andExpect(jsonPath("$.errors[0].field").value("sort"));
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = { "minPrice", "maxPrice" })
+    void aNegativePriceBoundIsAnInvalidValue(String field) throws Exception {
+        searchWith(field, "-1")
+                .andExpect(jsonPath("$.code").value("INVALID_VALUE"))
+                .andExpect(jsonPath("$.errors[0].field").value(field));
+    }
+
+    @Test
+    void severalRefinementViolationsAreReportedTogether() throws Exception {
+        searchWith("minPrice", "20000", "maxPrice", "10000", "minStars", "9", "sort", "bogus")
+                .andExpect(jsonPath("$.errors.length()").value(3))
+                .andExpect(jsonPath("$.errors[0].code").value("INVALID_PRICE_RANGE"))
+                .andExpect(jsonPath("$.errors[1].code").value("INVALID_STARS"))
+                .andExpect(jsonPath("$.errors[2].code").value("INVALID_SORT"))
+                .andExpect(jsonPath("$.code").value("INVALID_PRICE_RANGE"));
+    }
+
     @Test
     void anUnknownCityTogetherWithAnInvalidDateReturnsOnlyTheDateError() throws Exception {
         search("Atlantis", "2026-10-28", "2026-10-30", "2")
