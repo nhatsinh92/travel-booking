@@ -70,9 +70,11 @@ export async function loadSearch(
       }
       return { status: hasActiveFilters(params) ? 'no-filter-match' : 'empty' };
     }
-    if (response.status === 404 && error?.code === 'CITY_NOT_FOUND') return { status: 'no-city' };
-    if (response.status === 400 && Array.isArray(error?.errors)) {
-      return { status: 'error', errors: error.errors };
+    // The 500 body has no code or errors, so only a validation or not-found problem is read here.
+    const problem = typeof error === 'object' && error !== null && 'code' in error ? error : undefined;
+    if (response.status === 404 && problem?.code === 'CITY_NOT_FOUND') return { status: 'no-city' };
+    if (response.status === 400 && Array.isArray(problem?.errors)) {
+      return { status: 'error', errors: problem.errors };
     }
     console.error(`Hotel search returned an unexpected response (status ${response.status})`);
   } catch (error) {

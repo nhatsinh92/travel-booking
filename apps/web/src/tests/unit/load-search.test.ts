@@ -338,6 +338,15 @@ describe('loadSearch', () => {
       expect(await loadSearch(params, client)).toEqual({ status: 'unavailable' });
     });
 
+    it('returns unavailable for the 500 problem document the API sends', async () => {
+      const { client } = clientReturning({
+        error: { title: 'Internal server error', status: 500 },
+        status: 500,
+      });
+
+      expect(await loadSearch(params, client)).toEqual({ status: 'unavailable' });
+    });
+
     it('returns unavailable for a 503 with an empty body', async () => {
       const { client } = clientReturning({ error: '', status: 503 });
 
