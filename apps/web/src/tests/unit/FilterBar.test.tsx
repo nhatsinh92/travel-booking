@@ -132,6 +132,19 @@ describe('FilterBar', () => {
     expect(pushedQuery()).toMatchObject({ minPrice: '10000', minStars: '5', sort: 'price_desc' });
   });
 
+  it('keeps an earlier change that has not reached the URL yet when a second control changes', async () => {
+    // The mocked search params never change, like the URL while a navigation is still pending.
+    render(<FilterBar />);
+    const user = userEvent.setup();
+    await user.selectOptions(screen.getByLabelText('Minimum stars'), '2');
+    await user.selectOptions(screen.getByLabelText('Sort by'), 'Price: high to low');
+
+    expect(push).toHaveBeenCalledTimes(2);
+    const second = new URLSearchParams(push.mock.calls[1][0].split('?')[1]);
+    expect(second.get('minStars')).toBe('2');
+    expect(second.get('sort')).toBe('price_desc');
+  });
+
   it('removes the stars filter when "Any" is chosen', async () => {
     useSearchParams.mockReturnValue(new URLSearchParams(`${CRITERIA}&minStars=3`));
     render(<FilterBar />);
