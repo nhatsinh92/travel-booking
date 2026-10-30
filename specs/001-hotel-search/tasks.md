@@ -197,7 +197,7 @@ Added after the T027–T039 code review, on the project owner's decisions. They 
 - [X] T057 Run the full quickstart.md validation (steps 1 to 8) on this machine; for each step that fails or is wrong, note the exact fix needed and apply it to the code, or report it, without rewriting unrelated sections of quickstart.md
 - [X] T058 Traceability check (constitution Principle III): list every acceptance scenario (US1-AS1..AS4, US2-AS1..AS5), edge case (EC1..EC9) and FR-016 with the name of at least one passing automated test that covers it, and add any missing test; update plan.md's "Test coverage map" only where it differs from what was built
 - [X] T059 Reconcile documents with the implemented behavior (constitution Principle I): update `specs/001-hotel-search/spec.md`, `plan.md`, `data-model.md` and `contracts/search-api.openapi.yaml` only where the code differs (including the `INVALID_VALUE` handling decided in A1, and the details settled in Phase 2: `meta` is always returned, as an empty object when there is no extra data, although the draft contract marks it optional; the error titles "Validation failed" and "City not found"; the `API_BASE_URL` default of `http://localhost:8080` in `next.config.ts`), and add the exact Da Nang blackout window (assumption A2) to quickstart.md step 3
-- [ ] T060 [P] Run `pnpm lint` and `pnpm test` in `apps/web` and `./gradlew build` in `apps/api`; fix only lint or formatting findings in files this feature created
+- [X] T060 [P] Run `pnpm lint` and `pnpm test` in `apps/web` and `./gradlew build` in `apps/api`; fix only lint or formatting findings in files this feature created
 
 ---
 
