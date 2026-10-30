@@ -72,4 +72,29 @@ describe('errorMessage', () => {
   it('falls back to the raw field name for a field it does not know', () => {
     expect(errorMessage(error('REQUIRED', 'mystery'))).toContain('mystery');
   });
+
+  it('says the price range is invalid for INVALID_PRICE_RANGE (EC8, FR-014)', () => {
+    const message = errorMessage(error('INVALID_PRICE_RANGE', 'minPrice'));
+    expect(message).toMatch(/price range is invalid/i);
+    expect(message).toMatch(/minimum price/i);
+  });
+
+  it.each(['INVALID_STARS', 'INVALID_SORT', 'INVALID_CURSOR'] as const)(
+    'gives a generic message that shows no raw code for %s',
+    (code) => {
+      const message = errorMessage(error(code, 'minStars'));
+      expect(message).toMatch(/something is wrong with your search/i);
+      expect(message).not.toContain(code);
+    },
+  );
+
+  it.each([
+    ['minPrice', /minimum price/i],
+    ['maxPrice', /maximum price/i],
+    ['minStars', /minimum star/i],
+  ])('names the filter %s that is in the wrong format for INVALID_VALUE (EC9)', (field, pattern) => {
+    const message = errorMessage(error('INVALID_VALUE', field));
+    expect(message).toMatch(pattern);
+    expect(message).toMatch(/format/i);
+  });
 });
