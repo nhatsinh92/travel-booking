@@ -133,6 +133,24 @@ class SearchValidatorTest {
     }
 
     @ParameterizedTest
+    @ValueSource(strings = { "99999999999", "-99999999999", "99999999999999999999999" })
+    void aWellFormedIntegerBeyondTheIntRangeIsOutOfRangeNotInvalid(String huge) {
+        List<FieldError> errors = errorsOf("Hanoi", "2026-11-05", "2026-11-07", huge);
+
+        assertThat(summary(errors)).containsExactly("guests:GUESTS_OUT_OF_RANGE");
+        assertThat(errors.get(0).meta()).isEqualTo(Map.of("min", 1, "max", 10));
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = { "+999999999-01-01", "+10000-01-01", "-0001-01-01" })
+    void aDateThePostgresDateColumnsCannotHoldIsAnInvalidValue(String extreme) {
+        assertThat(summary(errorsOf("Hanoi", extreme, "2026-11-07", "2")))
+                .containsExactly("checkIn:INVALID_VALUE");
+        assertThat(summary(errorsOf("Hanoi", "2026-11-05", extreme, "2")))
+                .containsExactly("checkOut:INVALID_VALUE");
+    }
+
+    @ParameterizedTest
     @ValueSource(strings = { "abc", "2.5", "1e1" })
     void aNonNumericGuestCountIsAnInvalidValue(String bad) {
         assertThat(summary(errorsOf("Hanoi", "2026-11-05", "2026-11-07", bad)))
