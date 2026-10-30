@@ -145,6 +145,15 @@ describe('FilterBar', () => {
     expect(second.get('sort')).toBe('price_desc');
   });
 
+  it('applies prices that were typed but not applied yet when a select changes', async () => {
+    render(<FilterBar />);
+    const user = userEvent.setup();
+    await user.type(screen.getByLabelText('Maximum price ($)'), '300');
+    await user.selectOptions(screen.getByLabelText('Minimum stars'), '4');
+
+    expect(pushedQuery()).toMatchObject({ maxPrice: '30000', minStars: '4' });
+  });
+
   it('removes the stars filter when "Any" is chosen', async () => {
     useSearchParams.mockReturnValue(new URLSearchParams(`${CRITERIA}&minStars=3`));
     render(<FilterBar />);

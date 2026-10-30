@@ -22,6 +22,9 @@ const page = (ids: number[], nextCursor: string | null) => ({
   response: new Response(null, { status: 200 }),
 });
 
+// The first page, rendered by the server in the real page and passed in as children.
+const first = <li>First hotel</li>;
+
 const searchParams = {
   city: 'Hanoi',
   checkIn: '2026-12-01',
@@ -38,18 +41,44 @@ beforeEach(() => {
 
 describe('LoadMore', () => {
   it('shows a Load more button while there is a next page (US2-AS4)', () => {
-    render(<LoadMore nextCursor="c1" searchParams={searchParams} />);
+    render(<LoadMore nextCursor="c1" searchParams={searchParams}>{first}</LoadMore>);
     expect(screen.getByRole('button', { name: 'Load more' })).toBeEnabled();
   });
 
-  it('hides itself when there is no next cursor', () => {
-    const { container } = render(<LoadMore nextCursor={null} searchParams={searchParams} />);
-    expect(container).toBeEmptyDOMElement();
+  it('shows the first page but no button when there is no next cursor', () => {
+    render(<LoadMore nextCursor={null} searchParams={searchParams}>{first}</LoadMore>);
+    expect(screen.getByText('First hotel')).toBeInTheDocument();
+    expect(screen.queryByRole('button')).not.toBeInTheDocument();
+  });
+
+  it('appends the new hotels to the same list as the first page', async () => {
+    GET.mockResolvedValue(page([21, 22], null));
+    render(<LoadMore nextCursor="c1" searchParams={searchParams}>{first}</LoadMore>);
+
+    await userEvent.click(screen.getByRole('button', { name: 'Load more' }));
+    await screen.findByRole('heading', { name: 'Hotel 22' });
+
+    expect(screen.getAllByRole('list')).toHaveLength(1);
+    expect(screen.getAllByRole('listitem')).toHaveLength(3);
+  });
+
+  it('moves focus to the first newly loaded hotel (keyboard and screen reader users)', async () => {
+    GET.mockResolvedValueOnce(page([21, 22], 'c2')).mockResolvedValueOnce(page([23], null));
+    render(<LoadMore nextCursor="c1" searchParams={searchParams}>{first}</LoadMore>);
+    const user = userEvent.setup();
+
+    await user.click(screen.getByRole('button', { name: 'Load more' }));
+    const firstNew = (await screen.findByRole('heading', { name: 'Hotel 21' })).closest('li');
+    expect(firstNew).toHaveFocus();
+
+    await user.click(screen.getByRole('button', { name: 'Load more' }));
+    const secondBatch = (await screen.findByRole('heading', { name: 'Hotel 23' })).closest('li');
+    expect(secondBatch).toHaveFocus();
   });
 
   it('asks the API for the next page with the same criteria, filters and sort (US2-AS4, FR-011)', async () => {
     GET.mockResolvedValue(page([21], null));
-    render(<LoadMore nextCursor="c1" searchParams={searchParams} />);
+    render(<LoadMore nextCursor="c1" searchParams={searchParams}>{first}</LoadMore>);
 
     await userEvent.click(screen.getByRole('button', { name: 'Load more' }));
 
@@ -71,7 +100,7 @@ describe('LoadMore', () => {
 
   it('appends the hotels, uses the new cursor next, and hides itself on the last page (US2-AS4)', async () => {
     GET.mockResolvedValueOnce(page([21, 22], 'c2')).mockResolvedValueOnce(page([23], null));
-    render(<LoadMore nextCursor="c1" searchParams={searchParams} />);
+    render(<LoadMore nextCursor="c1" searchParams={searchParams}>{first}</LoadMore>);
     const user = userEvent.setup();
 
     await user.click(screen.getByRole('button', { name: 'Load more' }));
@@ -88,7 +117,7 @@ describe('LoadMore', () => {
   it('reads "Loading…" and is disabled while the request is pending, then recovers (FR-016)', async () => {
     let resolve: (value: ReturnType<typeof page>) => void = () => {};
     GET.mockReturnValue(new Promise((r) => (resolve = r)));
-    render(<LoadMore nextCursor="c1" searchParams={searchParams} />);
+    render(<LoadMore nextCursor="c1" searchParams={searchParams}>{first}</LoadMore>);
 
     await userEvent.click(screen.getByRole('button', { name: 'Load more' }));
     const pending = screen.getByRole('button', { name: 'Loading…' });
@@ -102,7 +131,7 @@ describe('LoadMore', () => {
 
   it('shows a message and lets the user retry when the request fails', async () => {
     GET.mockRejectedValueOnce(new Error('network')).mockResolvedValueOnce(page([21], null));
-    render(<LoadMore nextCursor="c1" searchParams={searchParams} />);
+    render(<LoadMore nextCursor="c1" searchParams={searchParams}>{first}</LoadMore>);
     const user = userEvent.setup();
 
     await user.click(screen.getByRole('button', { name: 'Load more' }));
@@ -116,7 +145,7 @@ describe('LoadMore', () => {
 
   it('shows the same message for an error response', async () => {
     GET.mockResolvedValue({ error: { status: 500 }, response: new Response(null, { status: 500 }) });
-    render(<LoadMore nextCursor="c1" searchParams={searchParams} />);
+    render(<LoadMore nextCursor="c1" searchParams={searchParams}>{first}</LoadMore>);
 
     await userEvent.click(screen.getByRole('button', { name: 'Load more' }));
 
@@ -125,16 +154,30 @@ describe('LoadMore', () => {
 
   it('discards the appended hotels and uses the new cursor when the search params change (US2-AS5)', async () => {
     GET.mockResolvedValueOnce(page([21], 'c2')).mockResolvedValueOnce(page([31], null));
-    const { rerender } = render(<LoadMore nextCursor="c1" searchParams={searchParams} />);
+    const { rerender } = render(<LoadMore nextCursor="c1" searchParams={searchParams}>{first}</LoadMore>);
     const user = userEvent.setup();
     await user.click(screen.getByRole('button', { name: 'Load more' }));
     expect(await screen.findByRole('heading', { name: 'Hotel 21' })).toBeInTheDocument();
 
-    rerender(<LoadMore nextCursor="n1" searchParams={{ ...searchParams, sort: 'price_desc' }} />);
+    rerender(<LoadMore nextCursor="n1" searchParams={{ ...searchParams, sort: 'price_desc' }}>{first}</LoadMore>);
 
     expect(screen.queryByRole('heading', { name: 'Hotel 21' })).not.toBeInTheDocument();
     await user.click(screen.getByRole('button', { name: 'Load more' }));
     expect(GET.mock.calls[1][1].params.query).toMatchObject({ cursor: 'n1', sort: 'price_desc' });
     expect(await screen.findByRole('heading', { name: 'Hotel 31' })).toBeInTheDocument();
+  });
+
+  it('also starts over when the same search is re-rendered with a new first-page cursor', async () => {
+    GET.mockResolvedValueOnce(page([21], 'c2')).mockResolvedValueOnce(page([41], null));
+    const { rerender } = render(<LoadMore nextCursor="c1" searchParams={searchParams}>{first}</LoadMore>);
+    const user = userEvent.setup();
+    await user.click(screen.getByRole('button', { name: 'Load more' }));
+    expect(await screen.findByRole('heading', { name: 'Hotel 21' })).toBeInTheDocument();
+
+    rerender(<LoadMore nextCursor="n1" searchParams={searchParams}>{first}</LoadMore>);
+
+    expect(screen.queryByRole('heading', { name: 'Hotel 21' })).not.toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: 'Load more' }));
+    expect(GET.mock.calls[1][1].params.query.cursor).toBe('n1');
   });
 });
