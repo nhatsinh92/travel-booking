@@ -51,8 +51,10 @@ export async function loadSearch(
     if (response.status === 400 && Array.isArray(error?.errors)) {
       return { status: 'error', errors: error.errors };
     }
-  } catch {
+    console.error(`Hotel search returned an unexpected response (status ${response.status})`);
+  } catch (error) {
     // A failed request is handled like an unexpected response: the user can try again.
+    console.error('Hotel search request failed', error);
   }
   return { status: 'unavailable' };
 }
