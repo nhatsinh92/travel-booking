@@ -24,3 +24,6 @@ implementing anything; it takes precedence over this file.
 8. For Next.js code, follow apps/web/AGENTS.md: read the relevant guide
    in node_modules/next/dist/docs for the installed version before
    writing code. Do not rely on memory of older Next.js versions.
+9. Edit files with the editor tools, not PowerShell redirection or
+   Set-Content (they add a BOM and change encoding). Keep files UTF-8
+   without BOM.
