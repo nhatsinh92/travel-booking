@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import type { ApiClient } from '@/lib/api/client';
+import { createServerClient, type ApiClient } from '@/lib/api/client';
 import { loadSearch } from '@/lib/load-search';
 
 const hotel = {
@@ -253,6 +253,46 @@ describe('loadSearch', () => {
       });
 
       expect(await loadSearch(params, client)).toEqual({ status: 'unavailable' });
+    });
+  });
+
+  // The other tests mock the client, so they cannot see how guests reaches the URL.
+  describe('with the real API client and a stubbed fetch', () => {
+    async function queryFor(search: string): Promise<URLSearchParams> {
+      const requests: Request[] = [];
+      const fetch = vi.fn(async (request: Request) => {
+        requests.push(request);
+        return new Response(JSON.stringify({ items: [], nextCursor: null }), {
+          status: 200,
+          headers: { 'Content-Type': 'application/json' },
+        });
+      });
+      const client = createServerClient({ API_BASE_URL: 'http://api.example' }, { fetch });
+
+      await loadSearch(new URLSearchParams(search), client);
+
+      return new URL(requests[0].url).searchParams;
+    }
+
+    const base = 'city=Hanoi&checkIn=2026-12-01&checkOut=2026-12-03';
+
+    it('puts a non-integer guests value in the URL as guests=NaN (EC9, FR-015)', async () => {
+      expect((await queryFor(`${base}&guests=abc`)).get('guests')).toBe('NaN');
+    });
+
+    it('puts an integer guests value in the URL as digits', async () => {
+      expect((await queryFor(`${base}&guests=2`)).get('guests')).toBe('2');
+    });
+
+    it('sends the other criteria unchanged', async () => {
+      const query = await queryFor(`${base}&guests=2`);
+
+      expect(Object.fromEntries(query)).toEqual({
+        city: 'Hanoi',
+        checkIn: '2026-12-01',
+        checkOut: '2026-12-03',
+        guests: '2',
+      });
     });
   });
 });
