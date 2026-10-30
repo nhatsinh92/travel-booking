@@ -52,9 +52,13 @@ public class HotelSearchController {
                     description = "Validated against the configured range (1 to 10); only hotels whose "
                             + "capacity is at least this number are returned")
             @RequestParam(required = false) String guests,
+            @RequestParam(required = false) String minPrice,
+            @RequestParam(required = false) String maxPrice,
+            @RequestParam(required = false) String minStars,
+            @RequestParam(required = false) String sort,
             @Parameter(description = "Opaque; use nextCursor from the previous page with unchanged "
                     + "criteria, filters and sort")
             @RequestParam(required = false) String cursor) {
-        return service.search(city, checkIn, checkOut, guests, cursor);
+        return service.search(city, checkIn, checkOut, guests, minPrice, maxPrice, minStars, sort, cursor);
     }
 }

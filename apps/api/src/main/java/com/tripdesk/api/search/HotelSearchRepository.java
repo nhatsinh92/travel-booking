@@ -26,9 +26,19 @@ public class HotelSearchRepository {
                 .optional();
     }
 
-    /** Returns up to {@code limit} hotels ordered by price then id, after the cursor when given. */
+    /**
+     * Returns up to {@code limit} hotels in the request's sort order (sort column, then hotel id in the
+     * same direction), after the cursor when given. Only values from {@link SortOrder} constants are
+     * concatenated into the SQL; every request value is a bound parameter.
+     */
     public List<HotelResult> search(long cityId, SearchRequest request, Cursor after, int limit) {
-        String keyset = after == null ? "" : "AND (h.price_per_night_cents, h.id) > (:afterPrice, :afterId)";
+        SortOrder sort = request.sort();
+        String direction = sort.ascending() ? "" : " DESC";
+        String filters = (request.minPrice() == null ? "" : "AND h.price_per_night_cents >= :minPrice ")
+                + (request.maxPrice() == null ? "" : "AND h.price_per_night_cents <= :maxPrice ")
+                + (request.minStars() == null ? "" : "AND h.star_rating >= :minStars ");
+        String keyset = after == null ? ""
+                : "AND (h.%s, h.id) %s (:afterValue, :afterId)".formatted(sort.column(), sort.ascending() ? ">" : "<");
         JdbcClient.StatementSpec statement = jdbc.sql("""
                 SELECT h.id, h.name, h.star_rating, h.price_per_night_cents, h.image_path
                 FROM hotel h
@@ -40,16 +50,26 @@ public class HotelSearchRepository {
                         AND u.start_date < :checkOut
                         AND u.end_date > :checkIn)
                   %s
-                ORDER BY h.price_per_night_cents, h.id
+                  %s
+                ORDER BY h.%s%s, h.id%s
                 LIMIT :limit
-                """.formatted(keyset))
+                """.formatted(filters, keyset, sort.column(), direction, direction))
                 .param("cityId", cityId)
                 .param("guests", request.guests())
                 .param("checkIn", request.checkIn())
                 .param("checkOut", request.checkOut())
                 .param("limit", limit);
+        if (request.minPrice() != null) {
+            statement = statement.param("minPrice", request.minPrice());
+        }
+        if (request.maxPrice() != null) {
+            statement = statement.param("maxPrice", request.maxPrice());
+        }
+        if (request.minStars() != null) {
+            statement = statement.param("minStars", request.minStars());
+        }
         if (after != null) {
-            statement = statement.param("afterPrice", after.value()).param("afterId", after.hotelId());
+            statement = statement.param("afterValue", after.value()).param("afterId", after.hotelId());
         }
         return statement
                 .query((rs, rowNum) -> new HotelResult(

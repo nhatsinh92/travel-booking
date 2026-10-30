@@ -8,24 +8,28 @@ import com.tripdesk.api.error.ApiValidationException;
 import com.tripdesk.api.error.ErrorCode;
 import com.tripdesk.api.error.FieldError;
 
-/** Opaque position after the last row of a page: the sort value (price or star rating) and the hotel id. */
+/**
+ * Opaque position after the last row of a page: the sort it belongs to, the value of the sort column
+ * (price in cents or star rating) and the hotel id.
+ */
 public record Cursor(SortOrder sort, long value, long hotelId) {
 
     private static final String SEPARATOR = ":";
 
     public String encode() {
-        String text = value + SEPARATOR + hotelId;
+        String text = sort.wire() + SEPARATOR + value + SEPARATOR + hotelId;
         return Base64.getUrlEncoder().withoutPadding().encodeToString(text.getBytes(StandardCharsets.UTF_8));
     }
 
+    /** Decodes a cursor and rejects it unless it was issued for {@code expectedSort}. */
     public static Cursor decode(String value, SortOrder expectedSort) {
         try {
             String text = new String(Base64.getUrlDecoder().decode(value), StandardCharsets.UTF_8);
             String[] parts = text.split(SEPARATOR, -1);
-            if (parts.length != 2) {
+            if (parts.length != 3 || !parts[0].equals(expectedSort.wire())) {
                 throw invalid();
             }
-            return new Cursor(expectedSort, Long.parseLong(parts[0]), Long.parseLong(parts[1]));
+            return new Cursor(expectedSort, Long.parseLong(parts[1]), Long.parseLong(parts[2]));
         } catch (IllegalArgumentException e) {
             // Also covers NumberFormatException, which extends IllegalArgumentException.
             throw invalid();

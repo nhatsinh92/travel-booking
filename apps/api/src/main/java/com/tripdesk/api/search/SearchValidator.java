@@ -7,6 +7,7 @@ import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 import org.springframework.stereotype.Component;
 
@@ -19,6 +20,8 @@ import com.tripdesk.api.error.FieldError;
 public class SearchValidator {
 
     private static final int MIN_GUESTS = 1;
+    private static final int MIN_STARS = 1;
+    private static final int MAX_STARS = 5;
     /** Years a PostgreSQL date column can hold with room to spare; beyond this the query would fail. */
     private static final int MIN_YEAR = 1;
     private static final int MAX_YEAR = 9999;
@@ -33,8 +36,9 @@ public class SearchValidator {
 
     /**
      * Validates the raw query values and returns the parsed request. Every violation is collected
-     * (in the order city, checkIn, checkOut, guests) and reported together. A rule that needs a
-     * value that is missing or unparseable is skipped.
+     * (in the order city, checkIn, checkOut, guests, minPrice, maxPrice, minStars, sort) and reported
+     * together. A rule that needs a value that is missing or unparseable is skipped. The filters are
+     * optional (a blank value is absent) and the sort defaults to price ascending.
      */
     public SearchRequest validate(String city, String checkIn, String checkOut, String guests,
             String minPrice, String maxPrice, String minStars, String sort) {
@@ -57,10 +61,71 @@ public class SearchValidator {
 
         Integer guestCount = parseGuests(guests, errors);
 
+        Long minPriceValue = parsePrice("minPrice", minPrice, errors);
+        Long maxPriceValue = parsePrice("maxPrice", maxPrice, errors);
+        if (minPriceValue != null && maxPriceValue != null && minPriceValue > maxPriceValue) {
+            errors.add(error("maxPrice", ErrorCode.INVALID_PRICE_RANGE));
+        }
+        Integer minStarsValue = parseMinStars(minStars, errors);
+        SortOrder sortOrder = parseSort(sort, errors);
+
         if (!errors.isEmpty()) {
             throw new ApiValidationException(errors);
         }
-        return new SearchRequest(cityValue, checkInDate, checkOutDate, guestCount, null, null, null, null);
+        return new SearchRequest(cityValue, checkInDate, checkOutDate, guestCount, minPriceValue, maxPriceValue,
+                minStarsValue, sortOrder);
+    }
+
+    /** An optional price bound in cents: a missing or blank value is no bound, a negative one is invalid. */
+    private Long parsePrice(String field, String raw, List<FieldError> errors) {
+        String value = trimmedOrNull(raw);
+        if (value == null) {
+            return null;
+        }
+        try {
+            long price = Long.parseLong(value);
+            if (price >= 0) {
+                return price;
+            }
+        } catch (NumberFormatException e) {
+            // Falls through to the error below.
+        }
+        errors.add(error(field, ErrorCode.INVALID_VALUE));
+        return null;
+    }
+
+    private Integer parseMinStars(String raw, List<FieldError> errors) {
+        String value = trimmedOrNull(raw);
+        if (value == null) {
+            return null;
+        }
+        BigInteger stars;
+        try {
+            // BigInteger so a well-formed but huge number is out of range, not a wrong format.
+            stars = new BigInteger(value);
+        } catch (NumberFormatException e) {
+            errors.add(error("minStars", ErrorCode.INVALID_VALUE));
+            return null;
+        }
+        if (stars.compareTo(BigInteger.valueOf(MIN_STARS)) < 0
+                || stars.compareTo(BigInteger.valueOf(MAX_STARS)) > 0) {
+            errors.add(error("minStars", ErrorCode.INVALID_STARS));
+            return null;
+        }
+        return stars.intValueExact();
+    }
+
+    private SortOrder parseSort(String raw, List<FieldError> errors) {
+        String value = trimmedOrNull(raw);
+        if (value == null) {
+            return SortOrder.PRICE_ASC;
+        }
+        Optional<SortOrder> sort = SortOrder.fromWire(value);
+        if (sort.isEmpty()) {
+            errors.add(error("sort", ErrorCode.INVALID_SORT));
+            return null;
+        }
+        return sort.get();
     }
 
     private LocalDate parseDate(String field, String raw, List<FieldError> errors) {
