@@ -143,6 +143,7 @@ Added after the T027–T039 code review, on the project owner's decisions. They 
 - [X] T039n [US1] Verify retry (third review follow-up): with the API stopped the search page shows the unavailable message; after the API was started again, submitting the same search from the form (unchanged URL) fetched the results, so the message needs no extra "Try again" button. Checked on 2026-10-30 in Chrome against a production build (`pnpm start`) with a throw-away Playwright script that was not kept; one run, not an automated test. Covers: FR-017
 - [X] T039o [P] [US1] Pin the `guests` serialization at unit level: tests in `load-search.test.ts` use the real `createServerClient` with a stubbed fetch and assert the request URL carries `guests=NaN` for a non-integer value and `guests=2` for an integer one. They pin existing behavior, so there is no red step; a temporary change of `NaN` to `0` made them fail. Covers: EC9, FR-015
 - [X] T039p [US1] Update `plan.md` ahead of T059: the source tree (new components, `error.tsx`, `lib` modules), the fallback names and the current Suspense layout, the FR-017 / EC10 design bullet, the decision that URL and form validation can report different error sets, and coverage rows for EC10 and FR-017. T058 and T059 still re-check plan.md at the end
+- [X] T039q [P] [US1] Add the FR-017 sentence to the revision note at the top of `spec.md`
 
 **Checkpoint**: User Story 1 is fully functional and testable on its own (MVP).
 

@@ -6,7 +6,7 @@
 
 **Status**: Approved
 
-**Revision note**: After approval, FR-016 (loading placeholder, later extended to the load-more button) was added and the wording of User Story 2 acceptance scenario 2 was changed to state the minimum star rating, both on the project owner's decision (2026-10-29).
+**Revision note**: After approval, FR-016 (loading placeholder, later extended to the load-more button) was added and the wording of User Story 2 acceptance scenario 2 was changed to state the minimum star rating, both on the project owner's decision (2026-10-29). FR-017 (search service unavailable) and the matching edge case were added later, after the code review of the first frontend tasks, on the project owner's decision (2026-10-30).
 
 **Input**: User description: "Employees search for hotels for business trips quickly, by city and dates. P1: search by city, check-in date, check-out date and number of guests; each result shows hotel name, star rating, price per night and an image. P2: filter by price range and star rating, sort by price or star rating, load more results when the list is long. Out of scope: booking, hotel detail page, login, travel policy, AI assistant."
 
