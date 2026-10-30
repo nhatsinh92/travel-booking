@@ -2,7 +2,12 @@
 
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useState, type FormEvent } from 'react';
-import { hasSearch, parseSearchFilters, updateFilters } from '@/lib/search-params';
+import {
+  hasSearch,
+  parseSearchFilters,
+  updateFilters,
+  type SearchFilters,
+} from '@/lib/search-params';
 import styles from './FilterBar.module.css';
 
 const SORT_OPTIONS = [
@@ -24,15 +29,22 @@ export default function FilterBar() {
   const initial = parseSearchFilters(searchParams);
   const [minPrice, setMinPrice] = useState(initial.minPrice);
   const [maxPrice, setMaxPrice] = useState(initial.maxPrice);
-  const [minStars, setMinStars] = useState(initial.minStars);
-  const [sort, setSort] = useState(initial.sort);
+  // What the bar has asked for so far. The URL (searchParams) lags behind until the navigation
+  // finishes, so a second change made meanwhile must build on this, not on the old URL.
+  const [applied, setApplied] = useState(initial);
 
   // Filters need a search to apply to.
   if (!hasSearch(searchParams)) return null;
 
+  function apply(changes: Partial<SearchFilters>) {
+    const next = { ...applied, ...changes };
+    setApplied(next);
+    router.push(updateFilters(searchParams, next));
+  }
+
   function applyPrices() {
-    if (minPrice === initial.minPrice && maxPrice === initial.maxPrice) return;
-    router.push(updateFilters(searchParams, { minPrice, maxPrice }));
+    if (minPrice === applied.minPrice && maxPrice === applied.maxPrice) return;
+    apply({ minPrice, maxPrice });
   }
 
   function submit(event: FormEvent<HTMLFormElement>) {
@@ -69,11 +81,8 @@ export default function FilterBar() {
         Minimum stars
         <select
           name="minStars"
-          value={minStars}
-          onChange={(e) => {
-            setMinStars(e.target.value);
-            router.push(updateFilters(searchParams, { minStars: e.target.value }));
-          }}
+          value={applied.minStars}
+          onChange={(e) => apply({ minStars: e.target.value })}
         >
           <option value="">Any</option>
           {STAR_OPTIONS.map((stars) => (
@@ -87,11 +96,8 @@ export default function FilterBar() {
         Sort by
         <select
           name="sort"
-          value={sort}
-          onChange={(e) => {
-            setSort(e.target.value);
-            router.push(updateFilters(searchParams, { sort: e.target.value }));
-          }}
+          value={applied.sort}
+          onChange={(e) => apply({ sort: e.target.value })}
         >
           {SORT_OPTIONS.map((option) => (
             <option key={option.value} value={option.value}>
