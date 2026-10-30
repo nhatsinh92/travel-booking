@@ -28,7 +28,7 @@ public class HotelSearchService {
     /** Validates first, then looks the city up, then queries; no query runs when validation fails. */
     public SearchResponse search(String city, String checkIn, String checkOut, String guests, String cursor) {
         SearchRequest request = validator.validate(city, checkIn, checkOut, guests, null, null, null, null);
-        Cursor after = cursor == null || cursor.isBlank() ? null : Cursor.decode(cursor);
+        Cursor after = cursor == null || cursor.isBlank() ? null : Cursor.decode(cursor, SortOrder.PRICE_ASC);
 
         long cityId = repository.findCityId(request.city())
                 .orElseThrow(() -> new ApiValidationException(
@@ -41,6 +41,6 @@ public class HotelSearchService {
         }
         List<HotelResult> page = rows.subList(0, pageSize);
         HotelResult last = page.get(pageSize - 1);
-        return new SearchResponse(page, new Cursor(last.pricePerNightCents(), last.id()).encode());
+        return new SearchResponse(page, new Cursor(SortOrder.PRICE_ASC, last.pricePerNightCents(), last.id()).encode());
     }
 }

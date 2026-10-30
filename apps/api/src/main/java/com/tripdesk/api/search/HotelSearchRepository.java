@@ -49,7 +49,7 @@ public class HotelSearchRepository {
                 .param("checkOut", request.checkOut())
                 .param("limit", limit);
         if (after != null) {
-            statement = statement.param("afterPrice", after.price()).param("afterId", after.hotelId());
+            statement = statement.param("afterPrice", after.value()).param("afterId", after.hotelId());
         }
         return statement
                 .query((rs, rowNum) -> new HotelResult(
