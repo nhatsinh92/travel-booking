@@ -124,7 +124,7 @@ Presentational components are marked "tested with code" and have their test in t
 
 ### Review follow-ups (US1)
 
-Added after the T027–T039 code review, on the project owner's decisions. They refine US1 and use FR-017 / EC10, added to spec.md at the same time.
+Added after the T027â€“T039 code review, on the project owner's decisions. They refine US1 and use FR-017 / EC10, added to spec.md at the same time.
 
 - [X] T039a [P] [US1] Test first (logic): extend `load-search.test.ts` in `apps/web/src/tests/unit/`: a network failure (the client rejects), a 5xx response and any other unexpected status, or a 400/404 whose body is not a problem document, return state `unavailable` instead of throwing (replaces the "throws" case). Covers: EC10, FR-017. Then: T039b
 - [X] T039b [US1] Add the `unavailable` state to `apps/web/src/lib/load-search.ts`; make T039a pass
