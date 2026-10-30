@@ -102,9 +102,40 @@ describe('loadSearch', () => {
     expect(await loadSearch(params, client)).toEqual({ status: 'error', errors });
   });
 
-  it('throws for a response the contract does not describe, so the error boundary shows it', async () => {
-    const { client } = clientReturning({ error: { message: 'boom' }, status: 500 });
+  describe('when the search service is unavailable (EC10, FR-017)', () => {
+    it('returns unavailable when the request fails', async () => {
+      const GET = vi.fn().mockRejectedValue(new TypeError('fetch failed'));
 
-    await expect(loadSearch(params, client)).rejects.toThrow(/500/);
+      expect(await loadSearch(params, { GET } as unknown as ApiClient)).toEqual({
+        status: 'unavailable',
+      });
+    });
+
+    it('returns unavailable for a 500 with an unrecognised body', async () => {
+      const { client } = clientReturning({ error: { message: 'boom' }, status: 500 });
+
+      expect(await loadSearch(params, client)).toEqual({ status: 'unavailable' });
+    });
+
+    it('returns unavailable for a 503 with an empty body', async () => {
+      const { client } = clientReturning({ error: '', status: 503 });
+
+      expect(await loadSearch(params, client)).toEqual({ status: 'unavailable' });
+    });
+
+    it('returns unavailable for a 400 whose body is not a problem document', async () => {
+      const { client } = clientReturning({ error: { message: 'bad gateway page' }, status: 400 });
+
+      expect(await loadSearch(params, client)).toEqual({ status: 'unavailable' });
+    });
+
+    it('returns unavailable for a 404 that is not CITY_NOT_FOUND', async () => {
+      const { client } = clientReturning({
+        error: problem(404, [{ field: 'x', code: 'INVALID_SORT', meta: {} }]),
+        status: 404,
+      });
+
+      expect(await loadSearch(params, client)).toEqual({ status: 'unavailable' });
+    });
   });
 });

@@ -10,7 +10,8 @@ export type SearchState =
   | { status: 'results'; items: HotelResult[]; nextCursor: string | null }
   | { status: 'empty' }
   | { status: 'no-city' }
-  | { status: 'error'; errors: FieldError[] };
+  | { status: 'error'; errors: FieldError[] }
+  | { status: 'unavailable' };
 
 export async function loadSearch(
   params: SearchParamsInput,
