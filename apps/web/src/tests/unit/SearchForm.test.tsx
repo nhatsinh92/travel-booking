@@ -66,6 +66,23 @@ describe('SearchForm', () => {
     expect(screen.queryByRole('alert')).not.toBeInTheDocument();
   });
 
+  it('drops the filters and the sort of the current URL when a new search is submitted (US2-AS5)', async () => {
+    useSearchParams.mockReturnValue(
+      new URLSearchParams(
+        'city=Hanoi&checkIn=2026-12-01&checkOut=2026-12-03&guests=2&minPrice=10000&minStars=3&sort=stars_desc',
+      ),
+    );
+    render(<SearchForm />);
+    const user = userEvent.setup();
+    await user.clear(screen.getByLabelText('City'));
+    await user.type(screen.getByLabelText('City'), 'Bangkok');
+    await user.click(screen.getByRole('button', { name: 'Search' }));
+
+    expect(push).toHaveBeenCalledWith(
+      '/search?city=Bangkok&checkIn=2026-12-01&checkOut=2026-12-03&guests=2',
+    );
+  });
+
   it('does not search and names every empty field (EC7, FR-012)', async () => {
     render(<SearchForm />);
     await userEvent.click(screen.getByRole('button', { name: 'Search' }));

@@ -1,15 +1,25 @@
 import HotelCard from '@/components/HotelCard';
+import LoadMore from '@/components/LoadMore';
 import type { HotelResult } from '@/lib/load-search';
 import styles from './ResultsList.module.css';
 
-export default function ResultsList({ items }: { items: HotelResult[] }) {
+type Props = {
+  items: HotelResult[];
+  nextCursor: string | null;
+  searchParams: Record<string, string | string[] | undefined>;
+};
+
+export default function ResultsList({ items, nextCursor, searchParams }: Props) {
   return (
-    <ul className={styles.list}>
-      {items.map((hotel) => (
-        <li key={hotel.id}>
-          <HotelCard hotel={hotel} />
-        </li>
-      ))}
-    </ul>
+    <div className={styles.results}>
+      <ul className={styles.list}>
+        {items.map((hotel) => (
+          <li key={hotel.id}>
+            <HotelCard hotel={hotel} />
+          </li>
+        ))}
+      </ul>
+      <LoadMore nextCursor={nextCursor} searchParams={searchParams} />
+    </div>
   );
 }

@@ -1,6 +1,12 @@
 import { render, screen } from '@testing-library/react';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import ResultsView from '@/components/ResultsView';
+
+vi.mock('next/navigation', () => ({
+  useRouter: () => ({ push: vi.fn() }),
+  useSearchParams: () => new URLSearchParams('city=Hanoi&minStars=5'),
+}));
+vi.mock('@/lib/api/client', () => ({ createBrowserClient: () => ({ GET: vi.fn() }) }));
 
 const hotel = (id: number) => ({
   id,
@@ -53,5 +59,31 @@ describe('ResultsView', () => {
     render(<ResultsView state={{ status: 'unavailable' }} />);
     expect(screen.getByRole('alert')).toHaveTextContent(/unavailable/i);
     expect(screen.getByRole('alert')).toHaveTextContent(/try again/i);
+  });
+
+  it('shows the clear-filters state for no-filter-match (EC6, FR-009)', () => {
+    render(<ResultsView state={{ status: 'no-filter-match' }} />);
+    expect(screen.getByText(/no hotels match these filters/i)).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Clear filters' })).toBeInTheDocument();
+  });
+
+  it('offers Load more under the first page when there is a next cursor (US2-AS4)', () => {
+    render(
+      <ResultsView
+        state={{ status: 'results', items: [hotel(1)], nextCursor: 'c1' }}
+        searchParams={{ city: 'Hanoi' }}
+      />,
+    );
+    expect(screen.getByRole('button', { name: 'Load more' })).toBeInTheDocument();
+  });
+
+  it('offers no Load more on the last page (US2-AS4)', () => {
+    render(
+      <ResultsView
+        state={{ status: 'results', items: [hotel(1)], nextCursor: null }}
+        searchParams={{ city: 'Hanoi' }}
+      />,
+    );
+    expect(screen.queryByRole('button', { name: 'Load more' })).not.toBeInTheDocument();
   });
 });

@@ -1,5 +1,6 @@
 import { connection } from 'next/server';
 import { Suspense } from 'react';
+import FilterBar from '@/components/FilterBar';
 import KeyedBySearchParams from '@/components/KeyedBySearchParams';
 import ResultsFallback from '@/components/ResultsFallback';
 import ResultsView from '@/components/ResultsView';
@@ -21,6 +22,7 @@ export default function SearchPage({ searchParams }: { searchParams: SearchParam
       <h1>Find a hotel</h1>
       <KeyedBySearchParams fallback={<SearchFormFallback />}>
         <SearchForm />
+        <FilterBar />
       </KeyedBySearchParams>
       <section className={styles.results} aria-label="Search results">
         {/* Two boundaries on purpose. KeyedBySearchParams has its own Suspense (empty fallback)
@@ -42,5 +44,6 @@ async function Results({ searchParams }: { searchParams: SearchParams }) {
   // Marks the results as request-time work; without it `next dev` reports a
   // blocking-prerender-current-time error for this route.
   await connection();
-  return <ResultsView state={await loadSearch(await searchParams, createServerClient())} />;
+  const params = await searchParams;
+  return <ResultsView state={await loadSearch(params, createServerClient())} searchParams={params} />;
 }
