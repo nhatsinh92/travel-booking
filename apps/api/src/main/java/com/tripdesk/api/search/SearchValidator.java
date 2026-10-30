@@ -1,5 +1,6 @@
 package com.tripdesk.api.search;
 
+import java.math.BigInteger;
 import java.time.Clock;
 import java.time.LocalDate;
 import java.time.format.DateTimeParseException;
@@ -18,6 +19,9 @@ import com.tripdesk.api.error.FieldError;
 public class SearchValidator {
 
     private static final int MIN_GUESTS = 1;
+    /** Years a PostgreSQL date column can hold with room to spare; beyond this the query would fail. */
+    private static final int MIN_YEAR = 1;
+    private static final int MAX_YEAR = 9999;
 
     private final SearchProperties properties;
     private final Clock clock;
@@ -65,7 +69,12 @@ public class SearchValidator {
             return null;
         }
         try {
-            return LocalDate.parse(value);
+            LocalDate date = LocalDate.parse(value);
+            if (date.getYear() < MIN_YEAR || date.getYear() > MAX_YEAR) {
+                errors.add(error(field, ErrorCode.INVALID_VALUE));
+                return null;
+            }
+            return date;
         } catch (DateTimeParseException e) {
             errors.add(error(field, ErrorCode.INVALID_VALUE));
             return null;
@@ -78,18 +87,21 @@ public class SearchValidator {
             errors.add(error("guests", ErrorCode.REQUIRED));
             return null;
         }
-        int guests;
+        BigInteger guests;
         try {
-            guests = Integer.parseInt(value);
+            // BigInteger so a well-formed but huge number is out of range, not a wrong format.
+            guests = new BigInteger(value);
         } catch (NumberFormatException e) {
             errors.add(error("guests", ErrorCode.INVALID_VALUE));
             return null;
         }
-        if (guests < MIN_GUESTS || guests > properties.maxGuests()) {
+        if (guests.compareTo(BigInteger.valueOf(MIN_GUESTS)) < 0
+                || guests.compareTo(BigInteger.valueOf(properties.maxGuests())) > 0) {
             errors.add(new FieldError("guests", ErrorCode.GUESTS_OUT_OF_RANGE,
                     Map.of("min", MIN_GUESTS, "max", properties.maxGuests())));
+            return null;
         }
-        return guests;
+        return guests.intValueExact();
     }
 
     private static String trimmedOrNull(String value) {
