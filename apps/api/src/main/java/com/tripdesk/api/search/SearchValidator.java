@@ -8,6 +8,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.regex.Pattern;
 
 import org.springframework.stereotype.Component;
 
@@ -25,6 +26,11 @@ public class SearchValidator {
     /** Years a PostgreSQL date column can hold with room to spare; beyond this the query would fail. */
     private static final int MIN_YEAR = 1;
     private static final int MAX_YEAR = 9999;
+
+    /** ASCII digits only: Java's number parsers also accept a plus sign and digits of other scripts. */
+    private static final Pattern DIGITS = Pattern.compile("[0-9]+");
+    /** As above, with an optional minus, for values where a negative number is reported as out of range. */
+    private static final Pattern SIGNED_DIGITS = Pattern.compile("-?[0-9]+");
 
     private final SearchProperties properties;
     private final Clock clock;
@@ -82,13 +88,12 @@ public class SearchValidator {
         if (value == null) {
             return null;
         }
-        try {
-            long price = Long.parseLong(value);
-            if (price >= 0) {
-                return price;
+        if (DIGITS.matcher(value).matches()) {
+            try {
+                return Long.parseLong(value);
+            } catch (NumberFormatException e) {
+                // Too large for a long; falls through to the error below.
             }
-        } catch (NumberFormatException e) {
-            // Falls through to the error below.
         }
         errors.add(error(field, ErrorCode.INVALID_VALUE));
         return null;
@@ -99,14 +104,12 @@ public class SearchValidator {
         if (value == null) {
             return null;
         }
-        BigInteger stars;
-        try {
-            // BigInteger so a well-formed but huge number is out of range, not a wrong format.
-            stars = new BigInteger(value);
-        } catch (NumberFormatException e) {
+        if (!SIGNED_DIGITS.matcher(value).matches()) {
             errors.add(error("minStars", ErrorCode.INVALID_VALUE));
             return null;
         }
+        // BigInteger so a well-formed but huge number is out of range, not a wrong format.
+        BigInteger stars = new BigInteger(value);
         if (stars.compareTo(BigInteger.valueOf(MIN_STARS)) < 0
                 || stars.compareTo(BigInteger.valueOf(MAX_STARS)) > 0) {
             errors.add(error("minStars", ErrorCode.INVALID_STARS));
@@ -153,14 +156,12 @@ public class SearchValidator {
             errors.add(error("guests", ErrorCode.REQUIRED));
             return null;
         }
-        BigInteger guests;
-        try {
-            // BigInteger so a well-formed but huge number is out of range, not a wrong format.
-            guests = new BigInteger(value);
-        } catch (NumberFormatException e) {
+        if (!SIGNED_DIGITS.matcher(value).matches()) {
             errors.add(error("guests", ErrorCode.INVALID_VALUE));
             return null;
         }
+        // BigInteger so a well-formed but huge number is out of range, not a wrong format.
+        BigInteger guests = new BigInteger(value);
         if (guests.compareTo(BigInteger.valueOf(MIN_GUESTS)) < 0
                 || guests.compareTo(BigInteger.valueOf(properties.maxGuests())) > 0) {
             errors.add(new FieldError("guests", ErrorCode.GUESTS_OUT_OF_RANGE,

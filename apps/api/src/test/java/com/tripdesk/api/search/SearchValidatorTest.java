@@ -236,6 +236,27 @@ class SearchValidatorTest {
         assertThat(summary(refinementErrors(null, null, "abc", null))).containsExactly("minStars:INVALID_VALUE");
     }
 
+    /** A plus sign, Arabic-Indic and fullwidth digits are numbers to Java's parsers but not ASCII digits. */
+    @ParameterizedTest
+    @ValueSource(strings = { "+5", "٣", "３", "3 3", "--3" })
+    void onlyAsciiDigitsAreAcceptedForGuests(String bad) {
+        assertThat(summary(errorsOf("Hanoi", "2026-11-05", "2026-11-07", bad)))
+                .containsExactly("guests:INVALID_VALUE");
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = { "+3", "٣", "３", "--3" })
+    void onlyAsciiDigitsAreAcceptedForMinimumStars(String bad) {
+        assertThat(summary(refinementErrors(null, null, bad, null))).containsExactly("minStars:INVALID_VALUE");
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = { "+100", "١٠٠", "１００" })
+    void onlyAsciiDigitsAreAcceptedForPriceBounds(String bad) {
+        assertThat(summary(refinementErrors(bad, null, null, null))).containsExactly("minPrice:INVALID_VALUE");
+        assertThat(summary(refinementErrors(null, bad, null, null))).containsExactly("maxPrice:INVALID_VALUE");
+    }
+
     @Test
     void thePriceRangeRuleIsSkippedWhenABoundIsUnparseable() {
         assertThat(summary(refinementErrors("abc", "10000", null, null))).containsExactly("minPrice:INVALID_VALUE");
