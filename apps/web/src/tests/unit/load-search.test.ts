@@ -42,22 +42,93 @@ describe('loadSearch', () => {
 
     expect(GET).toHaveBeenCalledWith('/api/v1/hotels/search', {
       params: {
-        query: { city: 'Hanoi', checkIn: '2026-12-01', checkOut: '2026-12-03', guests: '2' },
+        query: { city: 'Hanoi', checkIn: '2026-12-01', checkOut: '2026-12-03', guests: 2 },
       },
     });
   });
 
-  it('sends values as typed so the server can report them, including a wrong format', async () => {
+  it.each([
+    ['2', 2],
+    [' 3 ', 3],
+    ['10', 10],
+    ['-1', -1],
+    ['99999999999', 99999999999],
+  ])('sends guests %j to the client as the number %d', async (text, expected) => {
     const { client, GET } = clientReturning({ data: { items: [], nextCursor: null } });
 
     await loadSearch(
-      new URLSearchParams('city=Hanoi&checkIn=2027-13-45&checkOut=&guests=abc'),
+      new URLSearchParams({ city: 'Hanoi', checkIn: '2026-12-01', checkOut: '2026-12-03', guests: text }),
       client,
     );
 
-    expect(GET).toHaveBeenCalledWith('/api/v1/hotels/search', {
-      params: { query: { city: 'Hanoi', checkIn: '2027-13-45', checkOut: '', guests: 'abc' } },
+    expect(GET.mock.calls[0][1].params.query.guests).toBe(expected);
+  });
+
+  it.each(['abc', '2.5', '1e1', '0x10', '2 guests'])(
+    'sends a non-integer guests value %j as NaN so the server reports INVALID_VALUE',
+    async (text) => {
+      const { client, GET } = clientReturning({ data: { items: [], nextCursor: null } });
+
+      await loadSearch(
+        new URLSearchParams({
+          city: 'Hanoi',
+          checkIn: '2026-12-01',
+          checkOut: '2026-12-03',
+          guests: text,
+        }),
+        client,
+      );
+
+      expect(GET.mock.calls[0][1].params.query.guests).toBeNaN();
+    },
+  );
+
+  it('sends the other values as typed, including a wrong format', async () => {
+    const { client, GET } = clientReturning({ data: { items: [], nextCursor: null } });
+
+    await loadSearch(
+      new URLSearchParams('city=Hanoi&checkIn=2027-13-45&checkOut=2027-13-46&guests=2'),
+      client,
+    );
+
+    expect(GET.mock.calls[0][1].params.query).toMatchObject({
+      checkIn: '2027-13-45',
+      checkOut: '2027-13-46',
     });
+  });
+
+  it.each(['city', 'checkIn', 'checkOut', 'guests'])(
+    'returns REQUIRED for a blank %s without calling the API',
+    async (field) => {
+      const { client, GET } = clientReturning({ data: { items: [], nextCursor: null } });
+      const query = new URLSearchParams({
+        city: 'Hanoi',
+        checkIn: '2026-12-01',
+        checkOut: '2026-12-03',
+        guests: '2',
+      });
+      query.set(field, '  ');
+
+      expect(await loadSearch(query, client)).toEqual({
+        status: 'error',
+        errors: [{ field, code: 'REQUIRED', meta: {} }],
+      });
+      expect(GET).not.toHaveBeenCalled();
+    },
+  );
+
+  it('reports every missing criterion together, and a missing one from the URL', async () => {
+    const { client, GET } = clientReturning({ data: { items: [], nextCursor: null } });
+
+    const state = await loadSearch(new URLSearchParams('city=Hanoi'), client);
+
+    expect(state).toMatchObject({ status: 'error' });
+    expect(state.status === 'error' && state.errors.map((e) => e.field)).toEqual([
+      'checkIn',
+      'checkOut',
+      'guests',
+    ]);
+    expect(GET).not.toHaveBeenCalled();
   });
 
   it('returns results with the items and the next cursor for a 200 with items', async () => {
