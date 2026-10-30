@@ -12,12 +12,12 @@ export default function HotelCard({ hotel }: { hotel: HotelResult }) {
       <Image
         className={styles.image}
         src={hotel.imageUrl}
-        alt={`${hotel.name} exterior`}
+        alt={`${hotel.name} (placeholder image)`}
         width={IMAGE_WIDTH}
         height={IMAGE_HEIGHT}
       />
       <div className={styles.body}>
-        <h3 className={styles.name}>{hotel.name}</h3>
+        <h2 className={styles.name}>{hotel.name}</h2>
         <p className={styles.stars} role="img" aria-label={`${hotel.starRating} stars`}>
           {'★'.repeat(hotel.starRating)}
         </p>

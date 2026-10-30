@@ -95,6 +95,34 @@ describe('SearchForm', () => {
     expect(alert).toHaveTextContent(/guests/i);
   });
 
+  it('marks each invalid field and ties it to its message (EC7, FR-012)', async () => {
+    render(<SearchForm />);
+    await userEvent.click(screen.getByRole('button', { name: 'Search' }));
+
+    for (const label of ['City', 'Check-in', 'Check-out', 'Guests']) {
+      const input = screen.getByLabelText(label);
+      expect(input).toHaveAttribute('aria-invalid', 'true');
+      const message = document.getElementById(input.getAttribute('aria-describedby') ?? '');
+      expect(message).not.toBeNull();
+      expect(screen.getByRole('alert')).toContainElement(message);
+    }
+  });
+
+  it('marks only the field that is invalid, and nothing once the search is valid', async () => {
+    render(<SearchForm />);
+    const user = await fill({ ...valid, checkIn: '2026-12-03' });
+    await user.click(screen.getByRole('button', { name: 'Search' }));
+
+    expect(screen.getByLabelText('Check-out')).toHaveAttribute('aria-invalid', 'true');
+    expect(screen.getByLabelText('City')).not.toHaveAttribute('aria-invalid');
+    expect(screen.getByLabelText('City')).not.toHaveAttribute('aria-describedby');
+
+    await user.clear(screen.getByLabelText('Check-in'));
+    await user.type(screen.getByLabelText('Check-in'), valid.checkIn);
+    await user.click(screen.getByRole('button', { name: 'Search' }));
+    expect(screen.getByLabelText('Check-out')).not.toHaveAttribute('aria-invalid');
+  });
+
   it('does not search when check-out is not after check-in (EC1)', async () => {
     render(<SearchForm />);
     const user = await fill({ ...valid, checkIn: '2026-12-03' });

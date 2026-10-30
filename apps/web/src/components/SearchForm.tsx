@@ -9,6 +9,8 @@ import { buildSearchUrl, parseSearchCriteria, type SearchCriteria } from '@/lib/
 import { validateCriteria } from '@/lib/validate-criteria';
 import styles from './SearchForm.module.css';
 
+const ERROR_ID_PREFIX = 'search-form-error';
+
 // Initial values come from the URL. The parent renders this inside KeyedBySearchParams, which
 // remounts it when the search params change, so no previously typed state survives.
 export default function SearchForm() {
@@ -30,11 +32,16 @@ export default function SearchForm() {
 
   return (
     <form className={styles.form} onSubmit={submit} noValidate>
-      <SearchFields values={values} onChange={update} />
+      <SearchFields
+        values={values}
+        onChange={update}
+        errors={errors}
+        errorIdPrefix={ERROR_ID_PREFIX}
+      />
       <button type="submit" className={styles.submit}>
         Search
       </button>
-      {errors.length > 0 && <ErrorMessage errors={errors} />}
+      {errors.length > 0 && <ErrorMessage errors={errors} idPrefix={ERROR_ID_PREFIX} />}
     </form>
   );
 }

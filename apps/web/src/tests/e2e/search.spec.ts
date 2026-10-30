@@ -89,11 +89,11 @@ test.describe('hotel search', () => {
     await expect(first.getByRole('img', { name: /^\d stars$/ })).toBeVisible();
     await expect(first).toContainText(/\$\d[\d,]*\.\d{2}/);
     await expect(first).toContainText(/per night/i);
-    await expect(first.locator('img[alt$="exterior"]')).toBeVisible();
+    await expect(first.locator('img[alt$="(placeholder image)"]')).toBeVisible();
     await expect
       .poll(() =>
         first
-          .locator('img[alt$="exterior"]')
+          .locator('img[alt$="(placeholder image)"]')
           .evaluate((img: HTMLImageElement) => img.complete && img.naturalWidth > 0),
       )
       .toBe(true);

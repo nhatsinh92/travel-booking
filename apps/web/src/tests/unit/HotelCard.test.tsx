@@ -14,7 +14,7 @@ const hotel = {
 describe('HotelCard', () => {
   it('shows the hotel name', () => {
     render(<HotelCard hotel={hotel} />);
-    expect(screen.getByRole('heading', { name: 'Grand Hanoi' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { level: 2, name: 'Grand Hanoi' })).toBeInTheDocument();
   });
 
   it('shows the star rating', () => {
@@ -35,7 +35,7 @@ describe('HotelCard', () => {
 
   it('shows the hotel image with a text alternative that names the hotel', () => {
     render(<HotelCard hotel={hotel} />);
-    const image = screen.getByAltText(/Grand Hanoi/);
+    const image = screen.getByAltText('Grand Hanoi (placeholder image)');
     expect(image).toBeInTheDocument();
     expect(decodeURIComponent(image.getAttribute('src') ?? '')).toContain(
       '/images/hotels/hotel-03.png',
