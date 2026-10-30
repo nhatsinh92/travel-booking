@@ -103,7 +103,7 @@ Presentational components are marked "tested with code" and have their test in t
 
 ### Frontend tests first (US1)
 
-- [ ] T027 [P] [US1] Test first (logic): `money.test.ts` in `apps/web/src/tests/unit/` for `formatPricePerNight(cents, currency)` (for example 12550 and USD shows $125.50) and `dollarsToCents(text)` (valid and invalid input). Covers: US1-AS1 (price per night display). Then: T031
+- [X] T027 [P] [US1] Test first (logic): `money.test.ts` in `apps/web/src/tests/unit/` for `formatPricePerNight(cents, currency)` (for example 12550 and USD shows $125.50) and `dollarsToCents(text)` (valid and invalid input). Covers: US1-AS1 (price per night display). Then: T031
 - [ ] T028 [P] [US1] Test first (logic): `search-params.test.ts` in `apps/web/src/tests/unit/` for parsing `city`, `checkIn`, `checkOut`, `guests` from URL search params, `hasSearch` (true when any criterion param is present, false for a bare `/search`), and `buildSearchUrl(criteria)`. Covers: US1-AS2, FR-001. Then: T032
 - [ ] T029 [P] [US1] Test first (logic): `error-messages.test.ts` in `apps/web/src/tests/unit/` asserting the user-facing message for `INVALID_DATE_RANGE` (date range is invalid), `CHECK_IN_IN_PAST` (date must be today or later), `GUESTS_OUT_OF_RANGE` (shows the allowed range from `meta.min` and `meta.max`), `CITY_NOT_FOUND` (no matching city; check the spelling), `REQUIRED` (names the missing field), `INVALID_VALUE` (names the field that is in the wrong format). Covers: EC1, EC2, EC3, EC4, EC7, EC9, FR-015, SC-003. Then: T033
 - [ ] T030 [P] [US1] Test first (logic): `client.test.ts`, `validate-criteria.test.ts` and `load-search.test.ts` in `apps/web/src/tests/unit/`: the server-side client uses the base URL from `API_BASE_URL` and sends `cache: 'no-store'`, the browser-side client uses an empty base URL (same-origin `/api`); `validateCriteria` reports empty required fields and check-out not after check-in without calling the API (time-zone-independent checks only; past dates and guest range are left to the server); `loadSearch(params, client)` with the client mocked returns `idle` with no params, `results` for a 200 with items, `empty` for a 200 with no items and no filter active, `no-city` for 404 `CITY_NOT_FOUND`, and `error` carrying the codes (and field names) for a 400, including `INVALID_VALUE`. Covers: EC1, EC2, EC3, EC4, EC5, EC7, EC9, SC-003, and constitution Principle III (logic module `client.ts`). Then: T034
@@ -111,7 +111,7 @@ Presentational components are marked "tested with code" and have their test in t
 
 ### Frontend implementation (US1)
 
-- [ ] T031 [P] [US1] Implement `apps/web/src/lib/money.ts`; make T027 pass
+- [X] T031 [P] [US1] Implement `apps/web/src/lib/money.ts`; make T027 pass
 - [ ] T032 [P] [US1] Implement `apps/web/src/lib/search-params.ts`; make T028 pass
 - [ ] T033 [P] [US1] Implement `apps/web/src/lib/error-messages.ts`; make T029 pass
 - [ ] T034 [US1] Implement `apps/web/src/lib/api/client.ts` (typed `openapi-fetch` client over the generated schema from T026; server base URL from `API_BASE_URL`, browser base URL empty so calls use the `/api` rewrite; `cache: 'no-store'` for server calls), `apps/web/src/lib/validate-criteria.ts` and `apps/web/src/lib/load-search.ts`; make T030 pass
