@@ -92,6 +92,12 @@ describe('buildSearchUrl', () => {
     expect(parseSearchCriteria(new URLSearchParams(url.split('?')[1]))).toEqual(tricky);
   });
 
+  it('trims surrounding spaces from the city but keeps spaces inside it', () => {
+    const url = buildSearchUrl({ ...criteria, city: '  Ho Chi Minh City  ' });
+    const params = new URLSearchParams(url.split('?')[1]);
+    expect(params.get('city')).toBe('Ho Chi Minh City');
+  });
+
   it('produces a URL that hasSearch recognises', () => {
     expect(hasSearch(new URLSearchParams(buildSearchUrl(criteria).split('?')[1]))).toBe(true);
   });
