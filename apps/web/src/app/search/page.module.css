@@ -1,0 +1,9 @@
+.page {
+  max-width: 960px;
+  margin: 0 auto;
+  padding: 24px 16px;
+}
+
+.results {
+  margin-top: 24px;
+}
