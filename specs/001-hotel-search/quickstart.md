@@ -58,7 +58,7 @@ Guest capacity: repeating the valid search with `guests=10` returns fewer hotels
 
 Empty results: `city=Da Nang` with a stay inside the blackout window returns `items: []` and `nextCursor: null`. The window is 2028-12-20 (inclusive) to 2029-01-01 (exclusive), set in `V2__seed_sample_data.sql`; every Da Nang hotel is unavailable then. For example `checkIn=2028-12-20&checkOut=2028-12-22` is empty, while `checkIn=2028-12-19&checkOut=2028-12-20` and `checkIn=2029-01-01&checkOut=2029-01-03` return hotels, because a stay may end on the day the window starts or begin on the day it ends.
 
-The seed data uses fixed dates (this blackout window, and the availability ranges from 2026-12-01 in `V2__seed_sample_data.sql`), unlike the searches above, which are relative to today. After January 2029 the blackout window is in the past, so the empty-results example here, the "no availability" end-to-end test and step 5's blackout check stop working until the seed dates are moved.
+The seed data uses fixed dates, unlike the searches above, which are relative to today. The Da Nang blackout window ends on 2029-01-01, so after January 2029 the empty-results example here, step 5's blackout check and the "no availability" end-to-end test stop working until the window in `V2__seed_sample_data.sql` is moved.
 
 ## 4. Start the web app
 
