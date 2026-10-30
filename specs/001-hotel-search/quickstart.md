@@ -80,7 +80,7 @@ Open `http://localhost:3000/search`.
 cd apps/api && ./gradlew test      # includes the OpenAPI snapshot check
 cd apps/web && pnpm test           # Vitest
 cd apps/web && pnpm exec playwright install chromium   # once: downloads the browser Playwright uses
-cd apps/web && pnpm test:e2e       # Playwright (needs the database and API running)
+cd apps/web && pnpm test:e2e       # Playwright (needs the database, the API and the web app on http://localhost:3000 running)
 ```
 
 Expected: all pass. The coverage map in [plan.md](plan.md#test-coverage-map) lists which test covers which spec item.
@@ -93,4 +93,11 @@ Expected: p95 is well under 2 seconds in every scenario; the Playwright test add
 
 ## 8. Contract refresh (when the API changes)
 
-Run the documented Gradle task to refresh `apps/api/openapi/openapi.json`, then the `pnpm` script to regenerate the client. Expected: no diff when nothing changed; the snapshot test fails if the committed document is stale.
+Run the Gradle task to refresh `apps/api/openapi/openapi.json`, then the `pnpm` script to regenerate the client:
+
+```bash
+cd apps/api && ./gradlew refreshOpenApiSnapshot   # needs Docker (Testcontainers)
+cd apps/web && pnpm gen:api
+```
+
+Expected: no diff when nothing changed; the snapshot test fails if the committed document is stale.
