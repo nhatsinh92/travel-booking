@@ -12,7 +12,7 @@ type Props = {
 // The four search inputs, shared by the live form and its disabled placeholder so both lay out
 // identically.
 export default function SearchFields({ values, onChange, disabled = false }: Props) {
-  const common = { disabled, readOnly: disabled };
+  const common = { disabled };
   return (
     <>
       <label className={styles.field}>

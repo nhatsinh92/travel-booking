@@ -145,6 +145,7 @@ Added after the T027–T039 code review, on the project owner's decisions. They 
 - [X] T039p [US1] Update `plan.md` ahead of T059: the source tree (new components, `error.tsx`, `lib` modules), the fallback names and the current Suspense layout, the FR-017 / EC10 design bullet, the decision that URL and form validation can report different error sets, and coverage rows for EC10 and FR-017. T058 and T059 still re-check plan.md at the end
 - [X] T039q [P] [US1] Add the FR-017 sentence to the revision note at the top of `spec.md`
 - [X] T039r [P] [US1] Add one sentence to `quickstart.md` step 7 saying SC-001 must be measured on a production build
+- [X] T039s [P] [US1] Remove the redundant `readOnly` from the inputs in `apps/web/src/components/SearchFields.tsx` (a disabled input is already read-only); no behavior change, `SearchFormFallback.test.tsx` and `SearchForm.test.tsx` keep passing
 
 **Checkpoint**: User Story 1 is fully functional and testable on its own (MVP).
 
