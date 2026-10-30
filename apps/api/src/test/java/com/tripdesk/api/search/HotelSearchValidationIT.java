@@ -134,6 +134,21 @@ class HotelSearchValidationIT extends AbstractIntegrationTest {
     }
 
     @Test
+    void aMalformedCursorIsRejectedBeforeAnyQuery() throws Exception {
+        mockMvc.perform(get("/api/v1/hotels/search")
+                .param("city", "Hanoi")
+                .param("checkIn", "2026-11-05")
+                .param("checkOut", "2026-11-07")
+                .param("guests", "2")
+                .param("cursor", "garbage"))
+                .andExpect(status().isBadRequest())
+                .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_PROBLEM_JSON))
+                .andExpect(jsonPath("$.code").value("INVALID_CURSOR"))
+                .andExpect(jsonPath("$.errors.length()").value(1))
+                .andExpect(jsonPath("$.errors[0].field").value("cursor"));
+    }
+
+    @Test
     void anUnknownCityTogetherWithAnInvalidDateReturnsOnlyTheDateError() throws Exception {
         search("Atlantis", "2026-10-28", "2026-10-30", "2")
                 .andExpect(jsonPath("$.status").value(400))
