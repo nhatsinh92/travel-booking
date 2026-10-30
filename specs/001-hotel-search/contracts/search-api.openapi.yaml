@@ -20,14 +20,15 @@ paths:
         - { name: checkIn, in: query, required: true, schema: { type: string, format: date } }
         - { name: checkOut, in: query, required: true, schema: { type: string, format: date } }
         - { name: guests, in: query, required: true, schema: { type: integer }, description: "Validated against the configured range (1 to 10); only hotels whose capacity is at least this number are returned" }
-        - { name: minPrice, in: query, required: false, schema: { type: integer, minimum: 0 }, description: Price per night in cents }
-        - { name: maxPrice, in: query, required: false, schema: { type: integer, minimum: 0 }, description: Price per night in cents }
-        - { name: minStars, in: query, required: false, schema: { type: integer, minimum: 1, maximum: 5 } }
+        - { name: minPrice, in: query, required: false, schema: { type: integer, minimum: 0 }, description: "Lower price bound per night in cents, inclusive. Blank is treated as absent. A negative or non-integer value is `INVALID_VALUE`." }
+        - { name: maxPrice, in: query, required: false, schema: { type: integer, minimum: 0 }, description: "Upper price bound per night in cents, inclusive. Blank is treated as absent. A negative or non-integer value is `INVALID_VALUE`. A `minPrice` above `maxPrice` is `INVALID_PRICE_RANGE`, reported on this field." }
+        - { name: minStars, in: query, required: false, schema: { type: integer, minimum: 1, maximum: 5 }, description: "Minimum star rating, inclusive. Blank is treated as absent. An integer outside 1 to 5 is `INVALID_STARS`; a non-integer value is `INVALID_VALUE`." }
         - name: sort
           in: query
           required: false
+          description: "Case-sensitive. Blank is treated as the default. An unknown value is `INVALID_SORT`."
           schema: { type: string, enum: [price_asc, price_desc, stars_desc, stars_asc], default: price_asc }
-        - { name: cursor, in: query, required: false, schema: { type: string }, description: "Opaque; use nextCursor from the previous page with unchanged criteria, filters and sort" }
+        - { name: cursor, in: query, required: false, schema: { type: string }, description: "Opaque; use nextCursor from the previous page. Valid only with unchanged criteria, filters and sort; the result is undefined otherwise (a cursor issued for a different sort is rejected as `INVALID_CURSOR`)." }
       responses:
         "200":
           description: A page of results (possibly empty)

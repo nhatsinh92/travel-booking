@@ -52,20 +52,28 @@ public class HotelSearchController {
                     description = "Validated against the configured range (1 to 10); only hotels whose "
                             + "capacity is at least this number are returned")
             @RequestParam(required = false) String guests,
-            @Parameter(description = "Price per night in cents",
+            @Parameter(description = "Lower price bound per night in cents, inclusive. Blank is treated as "
+                    + "absent. A negative or non-integer value is `INVALID_VALUE`.",
                     schema = @Schema(type = "integer", minimum = "0"))
             @RequestParam(required = false) String minPrice,
-            @Parameter(description = "Price per night in cents",
+            @Parameter(description = "Upper price bound per night in cents, inclusive. Blank is treated as "
+                    + "absent. A negative or non-integer value is `INVALID_VALUE`. A `minPrice` above "
+                    + "`maxPrice` is `INVALID_PRICE_RANGE`, reported on this field.",
                     schema = @Schema(type = "integer", minimum = "0"))
             @RequestParam(required = false) String maxPrice,
-            @Parameter(schema = @Schema(type = "integer", minimum = "1", maximum = "5"))
+            @Parameter(description = "Minimum star rating, inclusive. Blank is treated as absent. An integer "
+                    + "outside 1 to 5 is `INVALID_STARS`; a non-integer value is `INVALID_VALUE`.",
+                    schema = @Schema(type = "integer", minimum = "1", maximum = "5"))
             @RequestParam(required = false) String minStars,
-            @Parameter(schema = @Schema(type = "string",
-                    allowableValues = { "price_asc", "price_desc", "stars_desc", "stars_asc" },
-                    defaultValue = "price_asc"))
+            @Parameter(description = "Case-sensitive. Blank is treated as the default. An unknown value is "
+                    + "`INVALID_SORT`.",
+                    schema = @Schema(type = "string",
+                            allowableValues = { "price_asc", "price_desc", "stars_desc", "stars_asc" },
+                            defaultValue = "price_asc"))
             @RequestParam(required = false) String sort,
-            @Parameter(description = "Opaque; use nextCursor from the previous page with unchanged "
-                    + "criteria, filters and sort")
+            @Parameter(description = "Opaque; use nextCursor from the previous page. Valid only with unchanged "
+                    + "criteria, filters and sort; the result is undefined otherwise (a cursor issued for a "
+                    + "different sort is rejected as `INVALID_CURSOR`).")
             @RequestParam(required = false) String cursor) {
         return service.search(city, checkIn, checkOut, guests, minPrice, maxPrice, minStars, sort, cursor);
     }

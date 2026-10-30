@@ -87,13 +87,15 @@ export interface operations {
                 checkOut: string;
                 /** @description Validated against the configured range (1 to 10); only hotels whose capacity is at least this number are returned */
                 guests: number;
-                /** @description Price per night in cents */
+                /** @description Lower price bound per night in cents, inclusive. Blank is treated as absent. A negative or non-integer value is `INVALID_VALUE`. */
                 minPrice?: number;
-                /** @description Price per night in cents */
+                /** @description Upper price bound per night in cents, inclusive. Blank is treated as absent. A negative or non-integer value is `INVALID_VALUE`. A `minPrice` above `maxPrice` is `INVALID_PRICE_RANGE`, reported on this field. */
                 maxPrice?: number;
+                /** @description Minimum star rating, inclusive. Blank is treated as absent. An integer outside 1 to 5 is `INVALID_STARS`; a non-integer value is `INVALID_VALUE`. */
                 minStars?: number;
+                /** @description Case-sensitive. Blank is treated as the default. An unknown value is `INVALID_SORT`. */
                 sort?: "price_asc" | "price_desc" | "stars_desc" | "stars_asc";
-                /** @description Opaque; use nextCursor from the previous page with unchanged criteria, filters and sort */
+                /** @description Opaque; use nextCursor from the previous page. Valid only with unchanged criteria, filters and sort; the result is undefined otherwise (a cursor issued for a different sort is rejected as `INVALID_CURSOR`). */
                 cursor?: string;
             };
             header?: never;

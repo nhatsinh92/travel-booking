@@ -57,7 +57,7 @@ A stay `[checkIn, checkOut)` conflicts when `start_date < checkOut AND end_date 
 |---------|--------|-------|
 | Search criteria | `city`, `checkIn`, `checkOut`, `guests` | All required (FR-012). `guests` is validated (1 to 10) and also filters results: only hotels with `max_guests >= guests` are returned (FR-013). |
 | Result refinements | `minPrice`, `maxPrice` (cents), `minStars` (1 to 5), `sort` | Optional. `sort` is one of `price_asc` (default), `price_desc`, `stars_desc`, `stars_asc`. |
-| Cursor | last row's sort value, hotel id, sort name | Opaque to clients; invalid or mismatched cursor gives `INVALID_CURSOR`. |
+| Cursor | sort name, last row's sort value, hotel id | Opaque to clients; the server encodes it as base64url of `<sort>:<value>:<id>` (`<value>` is the price in cents for the price sorts and the star rating for the star sorts). Invalid or mismatched cursor gives `INVALID_CURSOR`. A cursor is valid only with unchanged criteria, filters and sort; the server checks only the sort, so the result is undefined if criteria or filters changed. |
 
 ## Validation rules (applied on the server; mapped to spec items)
 
@@ -68,11 +68,13 @@ A stay `[checkIn, checkOut)` conflicts when `start_date < checkOut AND end_date 
 | `checkOut` on or before `checkIn` | `INVALID_DATE_RANGE` | 400 | FR-003 |
 | `checkIn` before today (server clock, configured zone) | `CHECK_IN_IN_PAST` | 400 | FR-004 |
 | `guests` below 1 or above the configured maximum (10), including a well-formed integer beyond the 32-bit integer range (for example `99999999999`); `meta` carries `min` and `max` | `GUESTS_OUT_OF_RANGE` | 400 | FR-005 |
-| `minPrice` greater than `maxPrice` | `INVALID_PRICE_RANGE` | 400 | FR-014 |
-| `minStars` outside 1 to 5 | `INVALID_STARS` | 400 | FR-008 |
-| unknown `sort` value | `INVALID_SORT` | 400 | FR-010 |
+| `minPrice` greater than `maxPrice`; the error names the field `maxPrice` (equal bounds are accepted) | `INVALID_PRICE_RANGE` | 400 | FR-014 |
+| `minStars` outside 1 to 5, including a well-formed integer too large for any numeric type (a non-integer `minStars` is `INVALID_VALUE`) | `INVALID_STARS` | 400 | FR-008 |
+| unknown `sort` value (matching is case-sensitive: only `price_asc`, `price_desc`, `stars_desc`, `stars_asc`) | `INVALID_SORT` | 400 | FR-010 |
 | malformed or mismatched `cursor` (a blank `cursor` is not an error: it is treated as absent, that is, the first page) | `INVALID_CURSOR` | 400 | FR-011 |
 | trimmed city not found | `CITY_NOT_FOUND` | 404 | FR-006 |
+
+`minPrice`, `maxPrice`, `minStars` and `sort` are optional: a missing or blank value is treated as absent (`sort` then defaults to `price_asc`). A negative `minPrice` or `maxPrice` is `INVALID_VALUE`; a price bound above the 64-bit integer range is also `INVALID_VALUE`.
 
 There is no maximum stay length (per your constraint). All field-level violations are returned together in `errors`; the response's top-level `code` repeats the first entry's code (there is no aggregate code). `CITY_NOT_FOUND` is only evaluated when the other input is valid. No search query runs on any error.
 
