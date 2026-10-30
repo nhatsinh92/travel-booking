@@ -240,7 +240,7 @@ Decided by the project owner: keep `cacheComponents: true` and `partialPrefetchi
 | Dependency | Purpose | Notes |
 |------------|---------|-------|
 | `next`, `react`, `react-dom` | Framework | App Router |
-| `typescript`, `@types/node`, `@types/react`, `@types/react-dom` | Types | dev |
+| `typescript`, `@types/node`, `@types/react`, `@types/react-dom` | Types | dev; `@types/node` is `^22` (vitest 5 needs `^22.0.0 \|\| >=24.0.0`; the app's `engines` is Node >=22.12) |
 | `eslint`, `eslint-config-next` | Linting | dev |
 | `vitest`, `@vitejs/plugin-react`, `jsdom` | Component test runner | dev |
 | `@testing-library/react`, `@testing-library/user-event`, `@testing-library/jest-dom` | Component testing | dev |
