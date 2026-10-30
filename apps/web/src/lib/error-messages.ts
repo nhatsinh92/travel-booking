@@ -7,6 +7,9 @@ const FIELD_LABELS: Record<string, string> = {
   checkIn: 'check-in date',
   checkOut: 'check-out date',
   guests: 'number of guests',
+  minPrice: 'minimum price',
+  maxPrice: 'maximum price',
+  minStars: 'minimum star rating',
 };
 
 function fieldLabel(field: string): string {
@@ -31,6 +34,8 @@ export function errorMessage(error: FieldError): string {
       return guestRange(error.meta);
     case 'CITY_NOT_FOUND':
       return 'No matching city. Please check the spelling.';
+    case 'INVALID_PRICE_RANGE':
+      return 'The price range is invalid: the minimum price must not be above the maximum price.';
     case 'REQUIRED':
       return `Please enter the ${fieldLabel(error.field)}.`;
     case 'INVALID_VALUE':

@@ -1,7 +1,14 @@
 import type { ApiClient } from '@/lib/api/client';
 import type { components, paths } from '@/lib/api/generated/schema';
 import type { FieldError } from '@/lib/error-messages';
-import { hasSearch, parseSearchCriteria, type SearchParamsInput } from '@/lib/search-params';
+import {
+  DEFAULT_SORT,
+  hasActiveFilters,
+  hasSearch,
+  parseSearchCriteria,
+  readParam,
+  type SearchParamsInput,
+} from '@/lib/search-params';
 import { validateCriteria } from '@/lib/validate-criteria';
 
 export type HotelResult = components['schemas']['HotelResult'];
@@ -10,13 +17,14 @@ export type SearchState =
   | { status: 'idle' }
   | { status: 'results'; items: HotelResult[]; nextCursor: string | null }
   | { status: 'empty' }
+  | { status: 'no-filter-match' }
   | { status: 'no-city' }
   | { status: 'error'; errors: FieldError[] }
   | { status: 'unavailable' };
 
-// The contract types guests as an integer. Integer text becomes that number; anything else
-// becomes NaN, which the server reports as INVALID_VALUE for the field.
-function guestsToNumber(text: string): number {
+// The contract types guests and the filters as integers. Integer text becomes that number;
+// anything else becomes NaN, which the server reports as INVALID_VALUE for the field.
+function integerOrNaN(text: string): number {
   const trimmed = text.trim();
   return /^-?\d+$/.test(trimmed) ? Number(trimmed) : Number.NaN;
 }
@@ -27,7 +35,17 @@ export type SearchQuery = NonNullable<
 
 // The API query for the URL's criteria, filters and sort, plus the cursor of the page to fetch.
 export function buildSearchQuery(params: SearchParamsInput, cursor?: string): SearchQuery {
-  throw new Error('not implemented');
+  const criteria = parseSearchCriteria(params);
+  const query: SearchQuery = { ...criteria, guests: integerOrNaN(criteria.guests) };
+  for (const name of ['minPrice', 'maxPrice', 'minStars'] as const) {
+    const text = (readParam(params, name) ?? '').trim();
+    if (text !== '') query[name] = integerOrNaN(text);
+  }
+  const sort = (readParam(params, 'sort') ?? '').trim();
+  // An unknown sort is sent as typed, so the server reports INVALID_SORT.
+  if (sort !== '' && sort !== DEFAULT_SORT) query.sort = sort as SearchQuery['sort'];
+  if (cursor) query.cursor = cursor;
+  return query;
 }
 
 export async function loadSearch(
@@ -43,18 +61,14 @@ export async function loadSearch(
 
   try {
     const { data, error, response } = await client.GET('/api/v1/hotels/search', {
-      params: {
-        query: {
-          ...criteria,
-          guests: guestsToNumber(criteria.guests),
-        },
-      },
+      params: { query: buildSearchQuery(params) },
     });
 
     if (data) {
-      return data.items.length > 0
-        ? { status: 'results', items: data.items, nextCursor: data.nextCursor }
-        : { status: 'empty' };
+      if (data.items.length > 0) {
+        return { status: 'results', items: data.items, nextCursor: data.nextCursor };
+      }
+      return { status: hasActiveFilters(params) ? 'no-filter-match' : 'empty' };
     }
     if (response.status === 404 && error?.code === 'CITY_NOT_FOUND') return { status: 'no-city' };
     if (response.status === 400 && Array.isArray(error?.errors)) {
