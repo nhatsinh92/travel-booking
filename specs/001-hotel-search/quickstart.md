@@ -87,7 +87,7 @@ Expected: all pass. The coverage map in [plan.md](plan.md#test-coverage-map) lis
 
 ## 7. Measure performance (SC-001, SC-002)
 
-Use the PowerShell commands in [tasks.md](tasks.md#baseline-performance-commands-powershell) (section "Baseline performance commands (PowerShell)"). They time four scenarios (search, filters plus sort, second page, server-rendered page) with dates relative to today.
+Use the PowerShell commands in [tasks.md](tasks.md#baseline-performance-commands-powershell) (section "Baseline performance commands (PowerShell)"). They time four scenarios (search, filters plus sort, second page, server-rendered page) with dates relative to today. Measure SC-001 on a production build (`pnpm build` then `pnpm start` in `apps/web`), not on `pnpm dev`, which compiles routes on first use and distorts the numbers and the Playwright timing assertion.
 
 Expected: p95 is well under 2 seconds in every scenario; the Playwright test additionally asserts results are visible in the browser within 2 seconds. Record the numbers. If they are not comfortably under target, investigate (`EXPLAIN` on the search query) before considering any caching, which is a separate change.
 

@@ -144,6 +144,7 @@ Added after the T027–T039 code review, on the project owner's decisions. They 
 - [X] T039o [P] [US1] Pin the `guests` serialization at unit level: tests in `load-search.test.ts` use the real `createServerClient` with a stubbed fetch and assert the request URL carries `guests=NaN` for a non-integer value and `guests=2` for an integer one. They pin existing behavior, so there is no red step; a temporary change of `NaN` to `0` made them fail. Covers: EC9, FR-015
 - [X] T039p [US1] Update `plan.md` ahead of T059: the source tree (new components, `error.tsx`, `lib` modules), the fallback names and the current Suspense layout, the FR-017 / EC10 design bullet, the decision that URL and form validation can report different error sets, and coverage rows for EC10 and FR-017. T058 and T059 still re-check plan.md at the end
 - [X] T039q [P] [US1] Add the FR-017 sentence to the revision note at the top of `spec.md`
+- [X] T039r [P] [US1] Add one sentence to `quickstart.md` step 7 saying SC-001 must be measured on a production build
 
 **Checkpoint**: User Story 1 is fully functional and testable on its own (MVP).
 
