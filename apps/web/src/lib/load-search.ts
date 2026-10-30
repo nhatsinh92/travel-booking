@@ -1,5 +1,5 @@
 import type { ApiClient } from '@/lib/api/client';
-import type { components } from '@/lib/api/generated/schema';
+import type { components, paths } from '@/lib/api/generated/schema';
 import type { FieldError } from '@/lib/error-messages';
 import { hasSearch, parseSearchCriteria, type SearchParamsInput } from '@/lib/search-params';
 import { validateCriteria } from '@/lib/validate-criteria';
@@ -19,6 +19,15 @@ export type SearchState =
 function guestsToNumber(text: string): number {
   const trimmed = text.trim();
   return /^-?\d+$/.test(trimmed) ? Number(trimmed) : Number.NaN;
+}
+
+export type SearchQuery = NonNullable<
+  paths['/api/v1/hotels/search']['get']['parameters']['query']
+>;
+
+// The API query for the URL's criteria, filters and sort, plus the cursor of the page to fetch.
+export function buildSearchQuery(params: SearchParamsInput, cursor?: string): SearchQuery {
+  throw new Error('not implemented');
 }
 
 export async function loadSearch(

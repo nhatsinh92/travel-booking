@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { createServerClient, type ApiClient } from '@/lib/api/client';
-import { loadSearch } from '@/lib/load-search';
+import { buildSearchQuery, loadSearch } from '@/lib/load-search';
 
 const hotel = {
   id: 1,
@@ -191,6 +191,110 @@ describe('loadSearch', () => {
     const { client } = clientReturning({ error: problem(400, errors), status: 400 });
 
     expect(await loadSearch(params, client)).toEqual({ status: 'error', errors });
+  });
+
+  describe('filters and sort (US2)', () => {
+    const emptyPage = { data: { items: [], nextCursor: null } };
+    const withFilters = (extra: string) => new URLSearchParams(`${params.toString()}&${extra}`);
+
+    it('passes the filters and the sort to the client as numbers and a sort name (US2-AS1 to AS3)', async () => {
+      const { client, GET } = clientReturning(emptyPage);
+
+      await loadSearch(
+        withFilters('minPrice=10000&maxPrice=25050&minStars=3&sort=stars_desc'),
+        client,
+      );
+
+      expect(GET.mock.calls[0][1].params.query).toEqual({
+        city: 'Hanoi',
+        checkIn: '2026-12-01',
+        checkOut: '2026-12-03',
+        guests: 2,
+        minPrice: 10000,
+        maxPrice: 25050,
+        minStars: 3,
+        sort: 'stars_desc',
+      });
+    });
+
+    it('sends only the filters that are set and leaves the default sort to the server', async () => {
+      const { client, GET } = clientReturning(emptyPage);
+
+      await loadSearch(withFilters('minStars=4&maxPrice=&sort=price_asc'), client);
+
+      const query = GET.mock.calls[0][1].params.query;
+      expect(query.minStars).toBe(4);
+      expect(query).not.toHaveProperty('maxPrice');
+      expect(query).not.toHaveProperty('minPrice');
+      expect(query).not.toHaveProperty('sort');
+    });
+
+    it.each(['minPrice', 'maxPrice', 'minStars'])(
+      'sends a non-integer %s as NaN so the server reports INVALID_VALUE (EC9)',
+      async (name) => {
+        const { client, GET } = clientReturning(emptyPage);
+
+        await loadSearch(withFilters(`${name}=abc`), client);
+
+        expect(GET.mock.calls[0][1].params.query[name]).toBeNaN();
+      },
+    );
+
+    it('passes an unknown sort on as typed so the server reports INVALID_SORT', async () => {
+      const { client, GET } = clientReturning(emptyPage);
+
+      await loadSearch(withFilters('sort=bogus'), client);
+
+      expect(GET.mock.calls[0][1].params.query.sort).toBe('bogus');
+    });
+
+    it('returns no-filter-match for an empty result while a filter is active (EC6, FR-009)', async () => {
+      for (const filter of ['minPrice=10000', 'maxPrice=500', 'minStars=5']) {
+        const { client } = clientReturning(emptyPage);
+        expect(await loadSearch(withFilters(filter), client)).toEqual({ status: 'no-filter-match' });
+      }
+    });
+
+    it('returns empty, not no-filter-match, when no filter is active (EC5, FR-007)', async () => {
+      const { client } = clientReturning(emptyPage);
+      expect(await loadSearch(params, client)).toEqual({ status: 'empty' });
+
+      const { client: sorted } = clientReturning(emptyPage);
+      expect(await loadSearch(withFilters('sort=stars_desc'), sorted)).toEqual({ status: 'empty' });
+    });
+
+    it('returns results with the first page cursor while filters are active (US2-AS4)', async () => {
+      const { client } = clientReturning({ data: { items: [hotel], nextCursor: 'next-1' } });
+
+      expect(await loadSearch(withFilters('minStars=3&sort=price_desc'), client)).toEqual({
+        status: 'results',
+        items: [hotel],
+        nextCursor: 'next-1',
+      });
+    });
+  });
+
+  describe('buildSearchQuery (used by LoadMore, US2-AS4)', () => {
+    it('carries the criteria, filters and sort of the URL, plus the cursor', () => {
+      const query = buildSearchQuery(
+        new URLSearchParams(`${params.toString()}&minPrice=10000&minStars=3&sort=price_desc`),
+        'abc',
+      );
+      expect(query).toEqual({
+        city: 'Hanoi',
+        checkIn: '2026-12-01',
+        checkOut: '2026-12-03',
+        guests: 2,
+        minPrice: 10000,
+        minStars: 3,
+        sort: 'price_desc',
+        cursor: 'abc',
+      });
+    });
+
+    it('has no cursor key without a cursor', () => {
+      expect(buildSearchQuery(params)).not.toHaveProperty('cursor');
+    });
   });
 
   describe('when the search service is unavailable (EC10, FR-017)', () => {
