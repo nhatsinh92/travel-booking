@@ -27,7 +27,7 @@ public class HotelSearchService {
 
     /** Validates first, then looks the city up, then queries; no query runs when validation fails. */
     public SearchResponse search(String city, String checkIn, String checkOut, String guests, String cursor) {
-        SearchRequest request = validator.validate(city, checkIn, checkOut, guests);
+        SearchRequest request = validator.validate(city, checkIn, checkOut, guests, null, null, null, null);
         Cursor after = cursor == null || cursor.isBlank() ? null : Cursor.decode(cursor);
 
         long cityId = repository.findCityId(request.city())

@@ -36,7 +36,8 @@ public class SearchValidator {
      * (in the order city, checkIn, checkOut, guests) and reported together. A rule that needs a
      * value that is missing or unparseable is skipped.
      */
-    public SearchRequest validate(String city, String checkIn, String checkOut, String guests) {
+    public SearchRequest validate(String city, String checkIn, String checkOut, String guests,
+            String minPrice, String maxPrice, String minStars, String sort) {
         List<FieldError> errors = new ArrayList<>();
 
         String cityValue = trimmedOrNull(city);
@@ -59,7 +60,7 @@ public class SearchValidator {
         if (!errors.isEmpty()) {
             throw new ApiValidationException(errors);
         }
-        return new SearchRequest(cityValue, checkInDate, checkOutDate, guestCount);
+        return new SearchRequest(cityValue, checkInDate, checkOutDate, guestCount, null, null, null, null);
     }
 
     private LocalDate parseDate(String field, String raw, List<FieldError> errors) {
