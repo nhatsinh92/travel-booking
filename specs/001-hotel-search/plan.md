@@ -120,20 +120,29 @@ apps/
     └── src/
         ├── app/
         │   ├── layout.tsx
-        │   └── search/page.tsx         # Server Component
+        │   └── search/
+        │       ├── page.tsx            # Server Component (shell, form, results behind Suspense)
+        │       └── error.tsx           # Client; last-resort error boundary with a retry button
         ├── components/
         │   ├── KeyedBySearchParams.tsx # Client (reads useSearchParams in Suspense; keys its children by the serialized search params)
-        │   ├── SearchForm.tsx          # Client
+        │   ├── SearchForm.tsx          # Client (form behaviour; initial values from the URL)
+        │   ├── SearchFields.tsx        # Client; the four inputs, shared by SearchForm and SearchFormFallback
+        │   ├── SearchFormFallback.tsx  # Server; disabled form with the same layout, prerendered in the shell
         │   ├── FilterBar.tsx           # Client (filters + sort, writes URL params)
         │   ├── ResultsList.tsx         # Server
+        │   ├── ResultsView.tsx         # Server; maps a search state to the component that shows it
+        │   ├── ResultsFallback.tsx     # Client; "Loading results" for a search URL, the hint for a bare /search
         │   ├── LoadMore.tsx            # Client
         │   ├── HotelCard.tsx
-        │   └── states/                 # ErrorMessage, NoCity, NoAvailability, NoFilterMatch, LoadingResults
+        │   └── states/                 # ErrorMessage, NoCity, NoAvailability, Unavailable, SearchHint, LoadingResults, NoFilterMatch
         ├── lib/
         │   ├── api/
         │   │   ├── generated/          # Generated client/types (committed; never hand-edited)
         │   │   └── client.ts           # base URL selection (server vs browser)
         │   ├── search-params.ts        # URL params <-> criteria/filters/sort
+        │   ├── validate-criteria.ts    # client-side checks (required fields, check-out after check-in)
+        │   ├── load-search.ts          # calls the API and returns a search state (results, empty, no-city, error, unavailable, idle)
+        │   ├── money.ts                # price formatting, dollars to cents
         │   └── error-messages.ts       # API error code -> user-facing message
         └── tests/
             ├── unit/                   # Vitest
@@ -147,20 +156,22 @@ apps/
 ### Frontend
 
 - `search/page.tsx` is a Server Component. It parses `searchParams` into criteria, filters and sort (`lib/search-params.ts`), and when any search criterion is present it calls the search endpoint with the generated client (`cache: 'no-store'`, so there is no hidden caching) and renders the first page.
-- With no search params at all, only the empty form is shown and no API call is made.
+- With no search params at all, the empty form and a short hint are shown and no API call is made.
 - Under Cache Components (see the decision below) the `searchParams` read and the API call happen inside a `<Suspense>` boundary; this refines the first bullet above.
 - URL params: `city`, `checkIn`, `checkOut`, `guests`, `minPrice`, `maxPrice`, `minStars`, `sort`. `SearchForm` and `FilterBar` (Client Components) update the URL; the server re-renders. Because state is in the URL, search is shareable, refreshable and back-button friendly.
 - `LoadMore` (Client) receives the first page's `nextCursor`, calls the API from the browser through the same-origin `/api` rewrite, and appends items in local state. It is keyed by the search params, so any change to criteria, filters or sort resets it.
 - Error handling: an error response maps by `code` through `error-messages.ts` to the exact messages in the spec. Guest-range messages read the allowed range from the error's `meta`, so the limit lives only on the server.
 - Client-side checks are limited to cheap, time-zone-independent ones (required fields, check-out after check-in) for fast feedback. The server remains the single authority for every rule, including past dates and guest range.
+- **Service unavailable (FR-017, EC10).** `loadSearch` turns a failed request, a 5xx, or any other unexpected response (including a 400 or 404 whose body is not a problem document) into the `unavailable` state, logs the cause with `console.error`, and `ResultsView` shows a message telling the user to try again. The form sits outside the results boundary, so it stays usable; submitting the same search again fetches again (checked in T039n). `app/search/error.tsx` is a last-resort boundary for anything `loadSearch` does not turn into a state.
+- **URL and form validation can report different error sets (decision).** The form runs `validateCriteria` and shows every required-field and date-range error together. A search opened from a URL (`loadSearch`) reports blank required criteria itself, before any request, and only those (`REQUIRED` for each blank one), because a blank `guests` cannot be sent as the integer the contract declares. Other rules then come from the server only once nothing is blank. So `?city=&checkIn=2026-12-05&checkOut=2026-12-03&guests=2` shows only "enter the city" until it is fixed, while the form would show that and the date range error together. Blank is reported as missing before invalid (FR-015). `guests` is sent as a number; text that is not an integer is sent as `NaN`, which the server reports as `INVALID_VALUE` for that field.
 
 #### Cache Components decision
 
 Decided by the project owner: keep `cacheComponents: true` and `partialPrefetching: true` in `apps/web/next.config.ts` (both were in the `create-next-app` scaffold; `partialPrefetching` requires `cacheComponents`). Behavior is taken from the Next.js docs shipped with the installed version (`node_modules/next/dist/docs`). Consequences for this plan:
 
 - **Still no caching.** Cache Components caches nothing unless code uses `use cache`; this feature never does, and server fetches keep `cache: 'no-store'`. `partialPrefetching` only prefetches the static App Shell of a route, and URL-specific content (including `searchParams`) resolves after navigation.
-- **Suspense and the loading placeholder (FR-016).** `search/page.tsx` renders the page shell (heading and search form) without reading `searchParams`. It passes the `searchParams` promise to the results component and awaits it only inside `<Suspense fallback={<LoadingResults />}>`. The fallback is the loading placeholder required by FR-016. `SearchForm` and `FilterBar` sit in the page shell inside the `KeyedBySearchParams` wrapper (below), which reads `useSearchParams()` inside its own `<Suspense>`, because the docs require a boundary for that hook. `FilterBar` stays outside the results `<Suspense>`, so it remains visible while results load; `NoFilterMatch` and `LoadMore` render inside `ResultsList`, inside the results boundary.
-- **Verified in T038 (2026-10-30).** `pnpm build` lists `/search` as partially prerendered (`◐`) and `pnpm dev` raised no blocking-route error once the results component awaits `connection()` before the API call (without it `next dev` logged a `blocking-prerender-current-time` error for the route). The fallback did NOT appear again when only the search params changed on a client navigation (the previous results stayed on screen until the new ones arrived), so the results `<Suspense>` boundary is wrapped in `KeyedBySearchParams` (with `<LoadingResults />` as its fallback), which keys it on the serialized search params. After that change the placeholder appeared on each of three consecutive searches that differed only in the search params. Checked in the browser against a delayed mock API, not against the seeded database.
+- **Suspense and the loading placeholder (FR-016).** `search/page.tsx` renders the page shell (heading, the search form or its placeholder, and the results area) without reading `searchParams`. It passes the `searchParams` promise to the `Results` component and awaits it only inside `<Suspense fallback={<ResultsFallback />}>`, which sits inside a second `KeyedBySearchParams` (two nested boundaries on purpose, see the next bullet). `ResultsFallback` (Client) shows the loading placeholder required by FR-016 (`LoadingResults`, `role="status"`) when the URL carries a search, and a short hint (`SearchHint`) when it does not, so a bare `/search` never shows "Loading results"; the `idle` state shows the same hint. `SearchForm` and `FilterBar` sit in the page shell inside the `KeyedBySearchParams` wrapper (below), which reads `useSearchParams()` inside its own `<Suspense>`, because the docs require a boundary for that hook. The form's wrapper takes `SearchFormFallback` (a disabled form with the same layout, sharing `SearchFields` with `SearchForm`) as its fallback, so the prerendered shell contains a form; the results wrapper's own fallback is empty. `ResultsView` maps the search state to the component that shows it. `FilterBar` stays outside the results `<Suspense>`, so it remains visible while results load; `NoFilterMatch` and `LoadMore` render inside `ResultsList`, inside the results boundary.
+- **Verified in T038 (2026-10-30).** `pnpm build` lists `/search` as partially prerendered (`◐`) and `pnpm dev` raised no blocking-route error once the results component awaits `connection()` before the API call (without it `next dev` logged a `blocking-prerender-current-time` error for the route). The fallback did NOT appear again when only the search params changed on a client navigation (the previous results stayed on screen until the new ones arrived), so the results `<Suspense>` boundary is wrapped in `KeyedBySearchParams`, which keys it on the serialized search params (the fallbacks were refined afterwards, see the previous bullet). After that change the placeholder appeared on each of three consecutive searches that differed only in the search params. Checked in the browser against a delayed mock API, not against the seeded database.
 - **State reset despite `<Activity>`.** Next.js keeps up to 3 visited routes mounted but hidden (`<Activity>`) and preserves Client Component state, so local state would otherwise survive a change of search params. `router.bfcacheId` does not change on search-param-only navigations, so it is NOT used. `SearchForm` and `FilterBar` read their values from the URL and are rendered inside the `KeyedBySearchParams` wrapper: a small Client Component that calls `useSearchParams()` inside `<Suspense>` (fallback `null` by default) and renders its children under a `key` equal to the serialized search params, so any change of criteria, filters or sort remounts them. `LoadMore` is keyed the same way by `ResultsList`, which already has the awaited params. Back and forward navigation restores the earlier URL and therefore its state. Checked against the docs (`useSearchParams`, `cacheComponents`, Preserving UI state): they require a `<Suspense>` boundary around `useSearchParams` and suggest deriving a key from your data in preference to `bfcacheId`; they do not contradict this approach.
 - **Timing checks.** With streaming, the shell and the placeholder appear before the results. The SC-001 and SC-002 assertions in the end-to-end tests measure until the hotel list itself is visible, not until the shell or the placeholder.
 
@@ -213,7 +224,9 @@ Decided by the project owner: keep `cacheComponents: true` and `partialPrefetchi
 | EC required field empty | ✓ | ✓ | |
 | FR-015 / EC value in the wrong format | ✓ | ✓ (message names the field) | |
 | FR-014 / EC minimum price above maximum price | ✓ | ✓ | |
-| FR-016 loading placeholder while results load | | ✓ (LoadingResults component; LoadMore "Loading…" button) | ✓ (placeholder observed during a search and during a filter or sort change) |
+| FR-016 loading placeholder while results load | | ✓ (LoadingResults and ResultsFallback components, which show the hint instead on a bare `/search`; LoadMore "Loading…" button) | ✓ (placeholder observed during a search and during a filter or sort change; never shown on a bare `/search`) |
+| EC10 search service unavailable or unexpected error | | ✓ (`loadSearch` returns `unavailable` and logs the cause; `ResultsView` and `Unavailable` show the message) | |
+| FR-017 try-again message, form stays usable | | ✓ (message, `error.tsx` retry button) | not automated: the form sits outside the results boundary, checked by hand with the API stopped (T039m, T039n) |
 | SC-001 / SC-002 timing | measured per quickstart | | sanity assertion (under 2 s, until the hotel list is visible) |
 | SC-003 invalid inputs blocked | ✓ (no query executed) | ✓ | |
 
