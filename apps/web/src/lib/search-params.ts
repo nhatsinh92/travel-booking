@@ -30,6 +30,6 @@ export function hasSearch(params: SearchParamsInput): boolean {
 
 export function buildSearchUrl(criteria: SearchCriteria): string {
   const query = new URLSearchParams();
-  for (const name of CRITERION_NAMES) query.set(name, criteria[name]);
+  for (const name of CRITERION_NAMES) query.set(name, name === 'city' ? criteria.city.trim() : criteria[name]);
   return `/search?${query.toString()}`;
 }
