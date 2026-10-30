@@ -97,8 +97,8 @@ Presentational components are marked "tested with code" and have their test in t
 
 ### Contract and client generation (US1)
 
-- [ ] T024 [P] [US1] Test first (contract): `OpenApiSnapshotTest` in `apps/api/src/test/java/com/tripdesk/api/contract/OpenApiSnapshotTest.java` fetching `/v3/api-docs` from the running test application and comparing it with `apps/api/openapi/openapi.json`; refreshing the snapshot is done only through a Gradle task (property-controlled), never silently. Covers: constitution Principle II (contract drift). Then: T025
-- [ ] T025 [US1] Add the springdoc annotations needed so the generated document matches contracts/search-api.openapi.yaml (operation id `searchHotels`, parameter descriptions, `Problem` and `FieldError` schemas with the ten codes including `INVALID_VALUE`), add the `refreshOpenApiSnapshot` Gradle task, generate and commit `apps/api/openapi/openapi.json`; make T024 pass; depends on T023
+- [X] T024 [P] [US1] Test first (contract): `OpenApiSnapshotTest` in `apps/api/src/test/java/com/tripdesk/api/contract/OpenApiSnapshotTest.java` fetching `/v3/api-docs` from the running test application and comparing it with `apps/api/openapi/openapi.json`; refreshing the snapshot is done only through a Gradle task (property-controlled), never silently. Covers: constitution Principle II (contract drift). Then: T025
+- [X] T025 [US1] Add the springdoc annotations needed so the generated document matches contracts/search-api.openapi.yaml (operation id `searchHotels`, parameter descriptions, `Problem` and `FieldError` schemas with the ten codes including `INVALID_VALUE`), add the `refreshOpenApiSnapshot` Gradle task, generate and commit `apps/api/openapi/openapi.json`; make T024 pass; depends on T023
 - [ ] T026 [US1] In `apps/web`, install `openapi-typescript` (dev) and `openapi-fetch` (runtime) only, add the `gen:api` script generating `apps/web/src/lib/api/generated/schema.d.ts` from `apps/api/openapi/openapi.json`, and commit the generated file without editing it by hand (`client.ts` is created in T034 after its test T030); depends on T025
 
 ### Frontend tests first (US1)

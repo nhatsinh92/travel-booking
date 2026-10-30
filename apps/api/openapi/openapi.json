@@ -1,0 +1,248 @@
+{
+  "openapi" : "3.1.0",
+  "info" : {
+    "title" : "OpenAPI definition",
+    "version" : "v0"
+  },
+  "servers" : [
+    {
+      "url" : "http://localhost",
+      "description" : "Generated server url"
+    }
+  ],
+  "paths" : {
+    "/api/v1/hotels/search" : {
+      "get" : {
+        "tags" : [
+          "hotel-search-controller"
+        ],
+        "summary" : "Search available hotels by city and dates",
+        "description" : "Returns one page (20 items) of hotels in the city that are available for the stay [checkIn, checkOut) and can accommodate the requested number of guests (hotel max_guests >= guests). No authentication. Input is always validated on the server; when validation fails no search is performed.",
+        "operationId" : "searchHotels",
+        "parameters" : [
+          {
+            "name" : "city",
+            "in" : "query",
+            "description" : "Matched trimmed, case-insensitive",
+            "required" : true,
+            "schema" : {
+              "type" : "string"
+            }
+          },
+          {
+            "name" : "checkIn",
+            "in" : "query",
+            "required" : true,
+            "schema" : {
+              "type" : "string",
+              "format" : "date"
+            }
+          },
+          {
+            "name" : "checkOut",
+            "in" : "query",
+            "required" : true,
+            "schema" : {
+              "type" : "string",
+              "format" : "date"
+            }
+          },
+          {
+            "name" : "guests",
+            "in" : "query",
+            "description" : "Validated against the configured range (1 to 10); only hotels whose capacity is at least this number are returned",
+            "required" : true,
+            "schema" : {
+              "type" : "integer"
+            }
+          },
+          {
+            "name" : "cursor",
+            "in" : "query",
+            "description" : "Opaque; use nextCursor from the previous page with unchanged criteria, filters and sort",
+            "required" : false,
+            "schema" : {
+              "type" : "string"
+            }
+          }
+        ],
+        "responses" : {
+          "200" : {
+            "description" : "A page of results (possibly empty)",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/SearchResponse"
+                }
+              }
+            }
+          },
+          "400" : {
+            "description" : "Validation failed; no search was performed",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404" : {
+            "description" : "City not found (`CITY_NOT_FOUND`)",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components" : {
+    "schemas" : {
+      "HotelResult" : {
+        "type" : "object",
+        "properties" : {
+          "id" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "name" : {
+            "type" : "string"
+          },
+          "starRating" : {
+            "type" : "integer",
+            "format" : "int32",
+            "maximum" : 5,
+            "minimum" : 1
+          },
+          "pricePerNightCents" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "currency" : {
+            "type" : "string",
+            "example" : "USD"
+          },
+          "imageUrl" : {
+            "type" : "string",
+            "description" : "Path of a static image served by the web app"
+          }
+        },
+        "required" : [
+          "currency",
+          "id",
+          "imageUrl",
+          "name",
+          "pricePerNightCents",
+          "starRating"
+        ]
+      },
+      "SearchResponse" : {
+        "type" : "object",
+        "properties" : {
+          "items" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/HotelResult"
+            },
+            "maxItems" : 20
+          },
+          "nextCursor" : {
+            "type" : [
+              "string",
+              "null"
+            ],
+            "description" : "Null when there are no more results"
+          }
+        },
+        "required" : [
+          "items",
+          "nextCursor"
+        ]
+      },
+      "FieldError" : {
+        "type" : "object",
+        "properties" : {
+          "field" : {
+            "type" : "string",
+            "example" : "guests"
+          },
+          "code" : {
+            "type" : "string",
+            "enum" : [
+              "REQUIRED",
+              "INVALID_VALUE",
+              "INVALID_DATE_RANGE",
+              "CHECK_IN_IN_PAST",
+              "GUESTS_OUT_OF_RANGE",
+              "INVALID_PRICE_RANGE",
+              "INVALID_STARS",
+              "INVALID_SORT",
+              "INVALID_CURSOR",
+              "CITY_NOT_FOUND"
+            ]
+          },
+          "meta" : {
+            "type" : "object",
+            "additionalProperties" : { },
+            "description" : "Extra values for the message, e.g. { min: 1, max: 10 } for GUESTS_OUT_OF_RANGE"
+          }
+        },
+        "required" : [
+          "code",
+          "field"
+        ]
+      },
+      "Problem" : {
+        "type" : "object",
+        "properties" : {
+          "type" : {
+            "type" : "string"
+          },
+          "title" : {
+            "type" : "string"
+          },
+          "status" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "detail" : {
+            "type" : "string"
+          },
+          "code" : {
+            "type" : "string",
+            "description" : "Repeats the code of the first entry in errors (there is no aggregate code)",
+            "enum" : [
+              "REQUIRED",
+              "INVALID_VALUE",
+              "INVALID_DATE_RANGE",
+              "CHECK_IN_IN_PAST",
+              "GUESTS_OUT_OF_RANGE",
+              "INVALID_PRICE_RANGE",
+              "INVALID_STARS",
+              "INVALID_SORT",
+              "INVALID_CURSOR",
+              "CITY_NOT_FOUND"
+            ]
+          },
+          "errors" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/FieldError"
+            }
+          }
+        },
+        "required" : [
+          "code",
+          "errors",
+          "status",
+          "title"
+        ]
+      }
+    }
+  }
+}
