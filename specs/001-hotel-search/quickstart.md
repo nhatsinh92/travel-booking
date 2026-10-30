@@ -79,6 +79,7 @@ Open `http://localhost:3000/search`.
 ```bash
 cd apps/api && ./gradlew test      # includes the OpenAPI snapshot check
 cd apps/web && pnpm test           # Vitest
+cd apps/web && pnpm exec playwright install chromium   # once: downloads the browser Playwright uses
 cd apps/web && pnpm test:e2e       # Playwright (needs the database and API running)
 ```
 

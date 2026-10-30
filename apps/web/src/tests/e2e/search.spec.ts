@@ -195,6 +195,8 @@ test.describe('hotel search', () => {
     expect(seen, 'the "Loading results" status was never observed').toBe(true);
   });
 
+  // Run this against a production build (`pnpm build; pnpm start`). `next dev` compiles routes on
+  // first use, which adds seconds that the 2-second limit does not allow for.
   test('shows the first hotel within 2 seconds of submitting (SC-001)', async ({ page }) => {
     await page.getByLabel('City').fill('Hanoi');
     await page.getByLabel('Check-in').fill(checkIn);

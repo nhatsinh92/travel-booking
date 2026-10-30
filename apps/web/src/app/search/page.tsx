@@ -28,8 +28,11 @@ export default function SearchPage({ searchParams }: { searchParams: SearchParam
         <SearchForm />
       </KeyedBySearchParams>
       <section className={styles.results} aria-label="Search results">
-        {/* Keyed so the placeholder shows again when only the search params change; without the
-            key React keeps the previous results on screen during the navigation. */}
+        {/* Two boundaries on purpose. KeyedBySearchParams has its own Suspense (empty fallback)
+            that waits for useSearchParams() while the shell is prerendered, and it keys its
+            children so the placeholder shows again when only the search params change; without
+            the key React keeps the previous results on screen during the navigation. The inner
+            Suspense shows the placeholder (or the hint) while the results load. */}
         <KeyedBySearchParams>
           <Suspense fallback={<ResultsFallback />}>
             <Results searchParams={searchParams} />

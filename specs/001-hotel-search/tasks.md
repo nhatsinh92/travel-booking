@@ -134,8 +134,8 @@ Added after the T027–T039 code review, on the project owner's decisions. They re
 - [X] T039f [US1] Update `apps/web/src/lib/load-search.ts` to convert `guests` before the call and remove the `as unknown as number` cast (the contract keeps `guests` an integer); add an end-to-end test in `search.spec.ts` that opens `/search?...&guests=abc` and sees the guests field named as invalid; make T039e pass. Covers: EC9, FR-015
 - [X] T039g [P] [US1] Test first (logic): extend `search-params.test.ts`: `buildSearchUrl` trims surrounding spaces from the city. (`validateCriteria` already treats a blank city as missing; its test exists.) Covers: FR-001. Then: T039h
 - [X] T039h [US1] Trim the city in `buildSearchUrl` in `apps/web/src/lib/search-params.ts`; make T039g pass
-- [ ] T039i [P] [US1] Add the explanatory comments: why `page.tsx` nests two `Suspense` boundaries with the same placeholder, and that the SC-001 test must run against a production build (`search.spec.ts`)
-- [ ] T039j [P] [US1] In `quickstart.md` step 6, add `pnpm exec playwright install chromium` before the e2e command
+- [X] T039i [P] [US1] Add the explanatory comments: why `page.tsx` nests two `Suspense` boundaries with the same placeholder, and that the SC-001 test must run against a production build (`search.spec.ts`)
+- [X] T039j [P] [US1] In `quickstart.md` step 6, add `pnpm exec playwright install chromium` before the e2e command
 
 **Checkpoint**: User Story 1 is fully functional and testable on its own (MVP).
 
