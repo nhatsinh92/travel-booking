@@ -209,24 +209,24 @@ Decided by the project owner: keep `cacheComponents: true` and `partialPrefetchi
 | US1-AS1 results with name, stars, price, image | ✓ | ✓ (HotelCard) | ✓ |
 | US1-AS2 new search replaces results | | ✓ | ✓ |
 | US1-AS3 no login needed | ✓ (no credentials sent) | | ✓ |
-| US1-AS4 / FR-013 hotels that cannot fit the guests are excluded | ✓ (capacity equal to, below and above `guests`) | | ✓ |
+| US1-AS4 / FR-013 hotels that cannot fit the guests are excluded | ✓ (capacity equal to, below and above `guests`) | | |
 | US2-AS1 price range filter | ✓ | ✓ (URL update) | ✓ |
-| US2-AS2 star filter | ✓ | ✓ (URL update) | |
+| US2-AS2 star filter | ✓ | ✓ (URL update) | ✓ |
 | US2-AS3 sort by price / stars | ✓ | ✓ (URL update) | ✓ |
 | US2-AS4 load more keeps filters and sort | ✓ (cursor continuity) | ✓ (append) | ✓ |
-| US2-AS5 new search resets filters and sort | | ✓ | |
+| US2-AS5 new search resets filters and sort | | ✓ | ✓ |
 | EC check-out on or before check-in | ✓ | ✓ (message) | |
-| EC check-in in the past | ✓ (fixed clock) | ✓ (message) | |
+| EC check-in in the past | ✓ (fixed clock) | ✓ (message) | ✓ |
 | EC guests out of range (below 1, above max) | ✓ | ✓ (message shows range) | |
-| EC city not found | ✓ | ✓ (message) | |
+| EC city not found | ✓ | ✓ (message) | ✓ |
 | EC no hotels for city and dates | ✓ (overlap, boundary-day cases) | ✓ (empty state, shown when no filter is active) | ✓ (blackout city) |
-| EC filters remove all results | ✓ | ✓ (empty state with clear filters, shown when a filter is active) | |
+| EC filters remove all results | ✓ | ✓ (empty state with clear filters, shown when a filter is active) | ✓ (clearing restores the results) |
 | EC required field empty | ✓ | ✓ | |
-| FR-015 / EC value in the wrong format | ✓ | ✓ (message names the field) | |
-| FR-014 / EC minimum price above maximum price | ✓ | ✓ | |
+| FR-015 / EC value in the wrong format | ✓ | ✓ (message names the field) | ✓ (`guests=abc`) |
+| FR-014 / EC minimum price above maximum price | ✓ | ✓ | ✓ |
 | FR-016 loading placeholder while results load | | ✓ (LoadingResults and ResultsFallback components, which show the hint instead on a bare `/search`; LoadMore "Loading…" button) | ✓ (placeholder observed during a search and during a filter or sort change; never shown on a bare `/search`) |
-| EC10 search service unavailable or unexpected error | | ✓ (`loadSearch` returns `unavailable` and logs the cause; `ResultsView` and `Unavailable` show the message) | |
-| FR-017 try-again message, form stays usable | | ✓ (message, `error.tsx` retry button) | not automated: the form sits outside the results boundary, checked by hand with the API stopped (T039m, T039n) |
+| EC10 search service unavailable or unexpected error | | ✓ (`loadSearch` returns `unavailable` and logs the cause; `ResultsView` and `Unavailable` show the message) | ✓ (`unavailable.spec.ts`) |
+| FR-017 try-again message, form stays usable | | ✓ (message, `error.tsx` retry button) | ✓ (`unavailable.spec.ts`: a second production server with `API_BASE_URL` pointing at a closed port; the message shows, and a new search can be submitted from the form) |
 | SC-001 / SC-002 timing | measured per quickstart | | sanity assertion (under 2 s, until the hotel list is visible) |
 | SC-003 invalid inputs blocked | ✓ (no query executed) | ✓ | |
 
