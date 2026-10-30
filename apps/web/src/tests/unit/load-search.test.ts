@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { ApiClient } from '@/lib/api/client';
 import { loadSearch } from '@/lib/load-search';
 
@@ -141,6 +141,26 @@ describe('loadSearch', () => {
     });
   });
 
+  it('logs nothing for the handled states', async () => {
+    const spy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    const handled = [
+      clientReturning({ data: { items: [hotel], nextCursor: null } }),
+      clientReturning({ data: { items: [], nextCursor: null } }),
+      clientReturning({
+        error: problem(404, [{ field: 'city', code: 'CITY_NOT_FOUND', meta: {} }]),
+        status: 404,
+      }),
+      clientReturning({
+        error: problem(400, [{ field: 'guests', code: 'INVALID_VALUE', meta: {} }]),
+        status: 400,
+      }),
+    ];
+    for (const { client } of handled) await loadSearch(params, client);
+
+    expect(spy).not.toHaveBeenCalled();
+    spy.mockRestore();
+  });
+
   it('returns empty for a 200 with no items', async () => {
     const { client } = clientReturning({ data: { items: [], nextCursor: null } });
 
@@ -174,6 +194,32 @@ describe('loadSearch', () => {
   });
 
   describe('when the search service is unavailable (EC10, FR-017)', () => {
+    beforeEach(() => {
+      vi.spyOn(console, 'error').mockImplementation(() => {});
+    });
+    afterEach(() => {
+      vi.restoreAllMocks();
+    });
+
+    it('logs the error when the request fails', async () => {
+      const failure = new TypeError('fetch failed');
+      const GET = vi.fn().mockRejectedValue(failure);
+
+      await loadSearch(params, { GET } as unknown as ApiClient);
+
+      expect(console.error).toHaveBeenCalledTimes(1);
+      expect(vi.mocked(console.error).mock.calls[0]).toContain(failure);
+    });
+
+    it('logs the status code for an unexpected response', async () => {
+      const { client } = clientReturning({ error: { message: 'boom' }, status: 503 });
+
+      await loadSearch(params, client);
+
+      expect(console.error).toHaveBeenCalledTimes(1);
+      expect(String(vi.mocked(console.error).mock.calls[0][0])).toContain('503');
+    });
+
     it('returns unavailable when the request fails', async () => {
       const GET = vi.fn().mockRejectedValue(new TypeError('fetch failed'));
 
