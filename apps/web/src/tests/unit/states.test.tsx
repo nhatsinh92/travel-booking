@@ -4,6 +4,7 @@ import ErrorMessage from '@/components/states/ErrorMessage';
 import LoadingResults from '@/components/states/LoadingResults';
 import NoAvailability from '@/components/states/NoAvailability';
 import NoCity from '@/components/states/NoCity';
+import Unavailable from '@/components/states/Unavailable';
 
 describe('ErrorMessage', () => {
   it('shows the message for an invalid date range (EC1)', () => {
@@ -65,5 +66,13 @@ describe('LoadingResults (FR-016)', () => {
   it('is a status region reading "Loading results"', () => {
     render(<LoadingResults />);
     expect(screen.getByRole('status')).toHaveTextContent('Loading results');
+  });
+});
+
+describe('Unavailable (EC10, FR-017)', () => {
+  it('tells the user to try again', () => {
+    render(<Unavailable />);
+    expect(screen.getByRole('alert')).toHaveTextContent(/unavailable/i);
+    expect(screen.getByRole('alert')).toHaveTextContent(/try again/i);
   });
 });

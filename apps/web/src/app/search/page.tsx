@@ -7,6 +7,7 @@ import ErrorMessage from '@/components/states/ErrorMessage';
 import LoadingResults from '@/components/states/LoadingResults';
 import NoAvailability from '@/components/states/NoAvailability';
 import NoCity from '@/components/states/NoCity';
+import Unavailable from '@/components/states/Unavailable';
 import { createServerClient } from '@/lib/api/client';
 import { loadSearch } from '@/lib/load-search';
 import styles from './page.module.css';
@@ -54,5 +55,7 @@ async function Results({ searchParams }: { searchParams: SearchParams }) {
       return <NoCity />;
     case 'error':
       return <ErrorMessage errors={state.errors} />;
+    case 'unavailable':
+      return <Unavailable />;
   }
 }
