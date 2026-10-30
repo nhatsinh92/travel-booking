@@ -2,7 +2,7 @@
 
 Recorded in T058 (constitution Principle III) on 2026-10-30. Every item has at least one automated test that passed in the run below. Edge cases are numbered in the order of the spec's Edge Cases list (EC1 to EC10).
 
-**Run**: `./gradlew cleanTest test` in `apps/api` (181 tests, 0 failures, 0 skipped); `pnpm test` in `apps/web` (16 files, 225 tests, all passed); `pnpm test:e2e` against the real stack on a production build (see tasks.md T060 for the final run).
+**Run**: `./gradlew cleanTest test` in `apps/api` (195 tests, 0 failures, 0 skipped); `pnpm test` in `apps/web` (16 files, 228 tests, all passed); `pnpm test:e2e` against the real stack on a production build (see tasks.md T060 for the final run).
 
 Notation: backend tests are `Class#method` in `com.tripdesk.api.search`; web unit tests are `file › test title` in `apps/web/src/tests/unit`; end-to-end tests are the titles in `apps/web/src/tests/e2e/search.spec.ts` (and `unavailable.spec.ts`).
 
