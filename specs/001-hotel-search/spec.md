@@ -4,7 +4,7 @@
 
 **Created**: 2026-10-29
 
-**Status**: Approved
+**Status**: Implemented
 
 **Revision note**: After approval, FR-016 (loading placeholder, later extended to the load-more button) was added and the wording of User Story 2 acceptance scenario 2 was changed to state the minimum star rating, both on the project owner's decision (2026-10-29). FR-017 (search service unavailable) and the matching edge case were added later, after the code review of the first frontend tasks, on the project owner's decision (2026-10-30).
 
