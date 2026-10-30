@@ -119,6 +119,18 @@ test.describe('hotel search', () => {
     await expect(other.getByLabel('City')).toHaveValue('Hanoi');
   });
 
+  test('shows a hint, not the loading placeholder, on a bare /search (FR-016)', async ({
+    page,
+  }) => {
+    await expect(page.getByLabel('City')).toBeEnabled();
+    await expect(page.getByText(/enter a city/i)).toBeVisible();
+    await expect(page.getByRole('status')).toHaveCount(0);
+    const seen = await page.evaluate(
+      () => (window as unknown as { __loadingSeen: boolean }).__loadingSeen,
+    );
+    expect(seen, 'the "Loading results" status appeared with no search').toBe(false);
+  });
+
   test('needs no sign-in (US1-AS3)', async ({ page }) => {
     await expect(page.getByLabel('City')).toBeVisible();
     await expect(page.locator('input[type="password"]')).toHaveCount(0);

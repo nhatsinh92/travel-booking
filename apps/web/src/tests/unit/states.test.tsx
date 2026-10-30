@@ -4,6 +4,7 @@ import ErrorMessage from '@/components/states/ErrorMessage';
 import LoadingResults from '@/components/states/LoadingResults';
 import NoAvailability from '@/components/states/NoAvailability';
 import NoCity from '@/components/states/NoCity';
+import SearchHint from '@/components/states/SearchHint';
 import Unavailable from '@/components/states/Unavailable';
 
 describe('ErrorMessage', () => {
@@ -74,5 +75,12 @@ describe('Unavailable (EC10, FR-017)', () => {
     render(<Unavailable />);
     expect(screen.getByRole('alert')).toHaveTextContent(/unavailable/i);
     expect(screen.getByRole('alert')).toHaveTextContent(/try again/i);
+  });
+});
+
+describe('SearchHint', () => {
+  it('asks for a city, dates and guests', () => {
+    render(<SearchHint />);
+    expect(screen.getByText(/city.*dates.*guests/i)).toBeInTheDocument();
   });
 });

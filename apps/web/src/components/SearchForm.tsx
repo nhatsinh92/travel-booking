@@ -2,6 +2,7 @@
 
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useState, type FormEvent } from 'react';
+import SearchFields from '@/components/SearchFields';
 import ErrorMessage from '@/components/states/ErrorMessage';
 import type { FieldError } from '@/lib/error-messages';
 import { buildSearchUrl, parseSearchCriteria, type SearchCriteria } from '@/lib/search-params';
@@ -29,43 +30,7 @@ export default function SearchForm() {
 
   return (
     <form className={styles.form} onSubmit={submit} noValidate>
-      <label className={styles.field}>
-        City
-        <input
-          name="city"
-          type="text"
-          value={values.city}
-          onChange={(e) => update('city', e.target.value)}
-        />
-      </label>
-      <label className={styles.field}>
-        Check-in
-        <input
-          name="checkIn"
-          type="date"
-          value={values.checkIn}
-          onChange={(e) => update('checkIn', e.target.value)}
-        />
-      </label>
-      <label className={styles.field}>
-        Check-out
-        <input
-          name="checkOut"
-          type="date"
-          value={values.checkOut}
-          onChange={(e) => update('checkOut', e.target.value)}
-        />
-      </label>
-      <label className={styles.field}>
-        Guests
-        <input
-          name="guests"
-          type="text"
-          inputMode="numeric"
-          value={values.guests}
-          onChange={(e) => update('guests', e.target.value)}
-        />
-      </label>
+      <SearchFields values={values} onChange={update} />
       <button type="submit" className={styles.submit}>
         Search
       </button>
