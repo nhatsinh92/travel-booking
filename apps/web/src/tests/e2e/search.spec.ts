@@ -333,6 +333,32 @@ test.describe('hotel search', () => {
       await expect(page.getByText(/no hotels match these filters/i)).toHaveCount(0);
     });
 
+    test('a minimum price above the maximum shows the price range message, and fixing it works (EC8)', async ({
+      page,
+    }) => {
+      await searchHanoi(page);
+      await page.getByLabel('Minimum price ($)').fill('100');
+      await page.getByLabel('Maximum price ($)').fill('50');
+      await page.getByLabel('Maximum price ($)').press('Enter');
+
+      await expect(resultsAlert(page)).toContainText(/price range is invalid/i);
+      await expect(hotelCards(page)).toHaveCount(0);
+      // The filter bar sits outside the results, so the user can correct the range.
+      await expect(page.getByLabel('Maximum price ($)')).toHaveValue('50');
+
+      await page.getByLabel('Maximum price ($)').fill('200');
+      await page.getByLabel('Maximum price ($)').press('Enter');
+
+      await expect(hotelCards(page).first()).toBeVisible();
+      await expect(resultsAlert(page)).toHaveCount(0);
+      await expect
+        .poll(async () => {
+          const prices = await cardPrices(page);
+          return prices.length > 0 && prices.every((price) => price >= 100 && price <= 200);
+        })
+        .toBe(true);
+    });
+
     test('a new search resets the filters and the sort (US2-AS5)', async ({ page }) => {
       await searchHanoi(page);
       await page.getByLabel('Minimum stars').selectOption('4');
