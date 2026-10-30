@@ -24,7 +24,7 @@ import com.tripdesk.api.error.ApiValidationException;
 import com.tripdesk.api.error.ErrorCode;
 import com.tripdesk.api.error.FieldError;
 
-@WebMvcTest
+@WebMvcTest(controllers = ApiErrorShapeTest.ThrowingController.class)
 @Import(ApiErrorShapeTest.ThrowingController.class)
 class ApiErrorShapeTest {
 
