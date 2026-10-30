@@ -33,3 +33,30 @@ export function buildSearchUrl(criteria: SearchCriteria): string {
   for (const name of CRITERION_NAMES) query.set(name, name === 'city' ? criteria.city.trim() : criteria[name]);
   return `/search?${query.toString()}`;
 }
+
+export const SORT_VALUES = ['price_asc', 'price_desc', 'stars_desc', 'stars_asc'] as const;
+export const DEFAULT_SORT = 'price_asc';
+
+// Form values: prices in dollars, as typed. The URL and the API carry cents.
+export type SearchFilters = {
+  minPrice: string;
+  maxPrice: string;
+  minStars: string;
+  sort: string;
+};
+
+export function parseSearchFilters(params: SearchParamsInput): SearchFilters {
+  throw new Error('not implemented');
+}
+
+export function hasActiveFilters(params: SearchParamsInput): boolean {
+  throw new Error('not implemented');
+}
+
+export function updateFilters(params: SearchParamsInput, changes: Partial<SearchFilters>): string {
+  throw new Error('not implemented');
+}
+
+export function clearFiltersUrl(params: SearchParamsInput): string {
+  throw new Error('not implemented');
+}
