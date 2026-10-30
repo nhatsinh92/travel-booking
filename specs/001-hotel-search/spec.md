@@ -65,6 +65,7 @@ After searching, the employee narrows the results by price range and star rating
 - A required field (city, either date, guests) is left empty: the search is not performed and the user sees which field is missing.
 - Minimum price greater than maximum price: the search is not performed; the user sees a message that the price range is invalid.
 - A value in the wrong format (for example an impossible date or a non-numeric guest count): the search is not performed; the user sees which field is invalid.
+- The search service is unavailable or returns an unexpected error: the user sees a message to try again, and the search form stays usable.
 
 ## Requirements *(mandatory)*
 
@@ -86,6 +87,7 @@ After searching, the employee narrows the results by price range and star rating
 - **FR-014**: System MUST reject a minimum price greater than the maximum price and tell the user the price range is invalid.
 - **FR-015**: System MUST NOT perform a search, and MUST tell the user which field is invalid, when a value is in the wrong format (for example an impossible date or a non-numeric number of guests). A missing or blank value is reported as missing (FR-012), not as invalid.
 - **FR-016**: While the results of a search, or of a change to filters or sort, are loading, the system MUST show a loading placeholder in place of the results. While more results are loading after the user chooses to load more, the load-more button MUST read "Loading…" and be disabled.
+- **FR-017**: If the search service is unavailable or returns an unexpected error, the system MUST show a message telling the user to try again, and the search form MUST stay usable.
 
 ### Key Entities
 
