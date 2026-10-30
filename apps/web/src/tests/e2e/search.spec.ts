@@ -376,20 +376,23 @@ test.describe('hotel search', () => {
       await expect.poll(async () => nonDecreasing(await cardPrices(page))).toBe(true);
     });
 
-    // One change per test, each from a freshly loaded search. Two changes in a row can come so
-    // soon after the previous results that the placeholder is not shown again (observed: a sort
-    // change right after a filter change); that is not what FR-016 asks to check.
-    async function expectPlaceholderDuring(page: Page, change: () => Promise<unknown>) {
-      await searchHanoi(page);
+    // Makes one change and checks that the "Loading results" status was added while it loaded.
+    // The wait is for a non-empty list that differs from the one before: an empty list (the
+    // placeholder itself) must not count as "the new results", or a following change would start
+    // while this change's placeholder is still on screen and its own would be missed.
+    async function changeAndExpectPlaceholder(page: Page, change: () => Promise<unknown>) {
       await page.evaluate(() => {
         (window as unknown as { __loadingSeen: boolean }).__loadingSeen = false;
       });
-      const before = await hotelNames(page);
+      const before = JSON.stringify(await hotelNames(page));
 
       await change();
-      await expect.poll(async () => JSON.stringify(await hotelNames(page))).not.toBe(
-        JSON.stringify(before),
-      );
+      await expect
+        .poll(async () => {
+          const names = await hotelNames(page);
+          return names.length > 0 && JSON.stringify(names) !== before;
+        })
+        .toBe(true);
 
       const seen = await page.evaluate(
         () => (window as unknown as { __loadingSeen: boolean }).__loadingSeen,
@@ -397,16 +400,28 @@ test.describe('hotel search', () => {
       expect(seen, 'the "Loading results" status was never observed').toBe(true);
     }
 
+    const changeStars = (page: Page) => () => page.getByLabel('Minimum stars').selectOption('4');
+    const changeSort = (page: Page) => () =>
+      page.getByLabel('Sort by').selectOption({ label: 'Price: high to low' });
+
     test('shows the loading placeholder while a filter change loads (FR-016)', async ({
       page,
     }) => {
-      await expectPlaceholderDuring(page, () => page.getByLabel('Minimum stars').selectOption('4'));
+      await searchHanoi(page);
+      await changeAndExpectPlaceholder(page, changeStars(page));
     });
 
     test('shows the loading placeholder while a sort change loads (FR-016)', async ({ page }) => {
-      await expectPlaceholderDuring(page, () =>
-        page.getByLabel('Sort by').selectOption({ label: 'Price: high to low' }),
-      );
+      await searchHanoi(page);
+      await changeAndExpectPlaceholder(page, changeSort(page));
+    });
+
+    test('shows the placeholder for a sort change made right after a filter change (FR-016)', async ({
+      page,
+    }) => {
+      await searchHanoi(page);
+      await changeAndExpectPlaceholder(page, changeStars(page));
+      await changeAndExpectPlaceholder(page, changeSort(page));
     });
 
     // Run against a production build, like SC-001. Timing is measured until the list has changed.
