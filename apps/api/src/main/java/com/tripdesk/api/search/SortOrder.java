@@ -42,7 +42,11 @@ public enum SortOrder {
         return ascending;
     }
 
-    /** The value of this sort's column for a hotel, as stored in a cursor. */
+    /**
+     * The value of this sort's column for a hotel, as stored in a cursor: the price in cents for the
+     * price sorts, the star rating for the star sorts. Both are widened to {@code long}; PostgreSQL
+     * compares the bound value with the integer and smallint columns without a cast.
+     */
     public long sortValueOf(HotelResult hotel) {
         return sortValue.applyAsLong(hotel);
     }

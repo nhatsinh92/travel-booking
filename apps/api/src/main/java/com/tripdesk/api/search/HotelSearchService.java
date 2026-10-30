@@ -43,6 +43,7 @@ public class HotelSearchService {
         }
         List<HotelResult> page = rows.subList(0, pageSize);
         HotelResult last = page.get(pageSize - 1);
-        return new SearchResponse(page, new Cursor(request.sort(), request.sort().sortValueOf(last), last.id()).encode());
+        Cursor next = new Cursor(request.sort(), request.sort().sortValueOf(last), last.id());
+        return new SearchResponse(page, next.encode());
     }
 }
