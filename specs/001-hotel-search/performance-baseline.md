@@ -95,3 +95,36 @@ Run with `docker exec -i tripdesk-postgres psql -U tripdesk -d tripdesk` and `EX
 ```
 
 </details>
+
+## Baseline performance (no caching)
+
+**Date**: 2026-10-30, 16:59 (local time) | **Commit**: `78e98ce` (HEAD when measured; only `tasks.md` differed in the working tree)
+
+**Machine**: 2 x Intel Xeon E5-2680 v4 @ 2.40 GHz (14 cores, 28 logical processors each; 56 logical in total), 63.9 GB RAM, Windows 10 Pro. Docker Desktop (engine 29.9.2) reports 56 CPUs and 33.6 GB for its VM; PostgreSQL 16 runs in it. Java 21 (Temurin 21.0.12). Other applications were open; no special effort to quiet the machine.
+
+**Setup, as the task prescribes**: PostgreSQL running with the V2 seed; API started with `./gradlew bootRun` (restarted just before the run; Spring Boot's `bootRun` runs the JVM with `-XX:TieredStopAtLevel=1`, so only the C1 compiler is used); web app a production build (`pnpm build`, then `pnpm start`). No cache layer; server calls use `cache: 'no-store'`. Commands: the PowerShell block in [tasks.md](tasks.md#baseline-performance-commands-powershell), with the URL fix committed in `7fff23f` (see below). Search: Hanoi, stay from today+30 to today+32 days, 2 guests. Every scenario returned 20 hotels before timing (A: next cursor present; B and C: 20 items).
+
+| Scenario | First request (ms) | p50 (ms) | p95 (ms) | Max (ms) |
+|----------|-------------------:|---------:|---------:|---------:|
+| A search, default sort | 10 | 5 | 6 | 22 |
+| B filters + stars sort | 7 | 5 | 6 | 6 |
+| C load more (page 2) | 6 | 5 | 6 | 18 |
+| D web page, server render | 180 | 166 | 175 | 177 |
+
+Each row: 1 first request, 5 discarded warm-up calls, 50 timed calls.
+
+**Playwright 2-second assertions** (full suite against the same stack, 22 of 22 passed, 28.8 s): "shows the first hotel within 2 seconds of submitting (SC-001)" passed (test duration 724 ms in total, including setup), and "each filter or sort change updates the list within 2 seconds (SC-002)" passed (1.4 s in total, several changes). The reporter does not print the individual assertion times.
+
+**Result against the targets (2000 ms)**
+
+| Criterion | Measure | Result |
+|-----------|---------|--------|
+| SC-001, search results visible within 2 s | Scenario A p95 6 ms (API); scenario D p95 175 ms (server-rendered page including its API call); Playwright assertion | PASS |
+| SC-002, filter or sort update within 2 s | Scenario B p95 6 ms (API); scenario D; Playwright assertion | PASS |
+
+**Caveats**
+- "First request" is not a true cold start. The command block first runs scenario A once to read the cursor and (in the check added for this record) one call each for B and C, so the timed first request of each scenario is not the first search the freshly started API served. The 10 ms figure is therefore a warm-ish first call; the API's own start-up (JVM, connection pool) is excluded.
+- Scenario D measures the server-rendered HTML including the API call; it excludes browser hydration and image loading. The browser-side figure is the Playwright assertion, which reports pass or fail, not milliseconds.
+- One machine, one run, with this much headroom between the figures and the target; no repeated runs were made.
+
+**Defect found in the commands**: in Windows PowerShell 5.1, `"$api?$base"` reads `$api?` as one variable name, so the URL came out empty and every request failed with "Invalid URI". The four URLs were changed to `"${api}?$base"` in tasks.md (commit `7fff23f`). The numbers above come from the corrected commands.
