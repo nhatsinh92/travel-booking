@@ -1,12 +1,3 @@
-<!--
-Sync Impact Report (temporary; remove before commit)
-Version change: 1.0.0 -> 1.1.0 (MINOR: materially expanded guidance in Principle III)
-Modified principles: III. Test Every Acceptance Criterion (title unchanged)
-Added sections: none
-Removed sections: none
-Follow-up TODOs: none
--->
-
 # TripDesk Constitution
 
 TripDesk is a learning and portfolio project: a corporate business-travel hotel booking platform,
