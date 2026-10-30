@@ -56,7 +56,7 @@ Invalid inputs, each expected to return the stated HTTP status with `application
 
 Guest capacity: repeating the valid search with `guests=10` returns fewer hotels than with `guests=2` (and still at least one); every returned hotel can accommodate the requested guests.
 
-Empty results: `city=Da Nang` with the blackout window (see the migration for exact dates) returns `items: []` and `nextCursor: null`.
+Empty results: `city=Da Nang` with a stay inside the blackout window returns `items: []` and `nextCursor: null`. The window is 2028-12-20 (inclusive) to 2029-01-01 (exclusive), set in `V2__seed_sample_data.sql`; every Da Nang hotel is unavailable then. For example `checkIn=2028-12-20&checkOut=2028-12-22` is empty, while `checkIn=2028-12-19&checkOut=2028-12-20` and `checkIn=2029-01-01&checkOut=2029-01-03` return hotels, because a stay may end on the day the window starts or begin on the day it ends.
 
 ## 4. Start the web app
 
@@ -70,7 +70,7 @@ Open `http://localhost:3000/search`.
 
 1. **US1**: Enter Hanoi, future dates, 2 guests, submit. Expected: results with name, stars, price per night, image; the URL now carries the search.
 2. Refresh, then open the URL in a new tab. Expected: the same results.
-3. **US2**: Set a price range and a minimum star rating, then change the sort. Expected: the list and URL update; back button restores the previous state.
+3. **US2**: Set a price range (type the prices, then click "Apply price") and a minimum star rating, then change the sort. Expected: the list and URL update; back button restores the previous state.
 4. Click "load more" at the end of the list. Expected: the next 20 hotels are appended with filters and sort unchanged.
 5. **Edge cases**: submit each invalid input from step 3 in the form. Expected: the exact messages in the spec. Search an unknown city, the blackout window, and a price range that matches nothing. Expected: "no matching city", "try different dates or fewer guests", and "clear filters" states.
 
@@ -82,6 +82,8 @@ cd apps/web && pnpm test           # Vitest
 cd apps/web && pnpm exec playwright install chromium   # once: downloads the browser Playwright uses
 cd apps/web && pnpm test:e2e       # Playwright (needs the database, the API and the web app on http://localhost:3000 running)
 ```
+
+The end-to-end tests use the web app on port 3000. The SC-001 and SC-002 timing assertions are meant for a production build (step 7). `unavailable.spec.ts` starts its own server with `next start` on port 3101, so run `pnpm build` in `apps/web` first and keep that port free; that file does not need the database or the API.
 
 Expected: all pass. The coverage map in [plan.md](plan.md#test-coverage-map) lists which test covers which spec item.
 

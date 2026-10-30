@@ -18,13 +18,13 @@ Approach: a Next.js Server Component search page renders the first page of resul
 
 **Storage**: PostgreSQL 16 (local, via Docker Compose), schema managed by Flyway migrations.
 
-**Testing**: Backend: JUnit 5 + Testcontainers (real PostgreSQL). Frontend: Vitest + Testing Library for components; Playwright for one end-to-end search flow.
+**Testing**: Backend: JUnit 5 + Testcontainers (real PostgreSQL). Frontend: Vitest + Testing Library for components; Playwright for end-to-end flows against the real stack.
 
 **Target Platform**: Local development (Docker Compose for the database, API and web run on the host). No deployment target.
 
 **Project Type**: Web application (monorepo: `apps/web` + `apps/api`).
 
-**Performance Goals**: Results visible within 2 seconds for a typical search (SC-001); filter/sort update within 2 seconds (SC-002). Measured, not assumed (see [quickstart.md](quickstart.md)).
+**Performance Goals**: Results visible within 2 seconds for a typical search (SC-001); filter/sort update within 2 seconds (SC-002). Measured, not assumed (see [quickstart.md](quickstart.md)); the no-caching baseline is in [performance-baseline.md](performance-baseline.md) and meets both targets.
 
 **Constraints**: No caching layer (Cache Components is enabled in `next.config.ts` but no code uses `use cache`; see [Cache Components decision](#cache-components-decision)). No maximum stay length. No authentication. Server validates all input. Page size fixed at 20.
 
@@ -74,7 +74,9 @@ specs/001-hotel-search/
 │   └── search-api.openapi.yaml   # Design-time draft; the code-generated document replaces it as the source of truth
 ├── checklists/
 │   └── requirements.md
-└── tasks.md             # Created later by /speckit-tasks
+├── tasks.md             # Created later by /speckit-tasks
+├── performance-baseline.md   # Query plans and the no-caching baseline (T055, T056)
+└── traceability.md      # Spec item to automated test list (T058)
 ```
 
 ### Source Code (repository root)
@@ -93,7 +95,8 @@ apps/
 │       ├── main/
 │       │   ├── java/com/tripdesk/api/
 │       │   │   ├── TripDeskApplication.java
-│       │   │   ├── config/             # Clock, search limits (max guests, page size), time zone
+│       │   │   ├── config/             # Clock, search limits (max guests, page size), time zone, OpenAPI info (OpenApiConfig)
+│       │   │   ├── error/              # ApiExceptionHandler (problem+json), ApiValidationException, ErrorCode, FieldError, Problem (schema for the OpenAPI document)
 │       │   │   └── search/
 │       │   │       ├── HotelSearchController.java
 │       │   │       ├── HotelSearchService.java
@@ -101,6 +104,7 @@ apps/
 │       │   │       ├── SearchRequest.java             # parsed query params
 │       │   │       ├── SearchValidator.java           # all edge-case rules
 │       │   │       ├── Cursor.java                    # opaque cursor encode/decode
+│       │   │       ├── SortOrder.java                 # the four sort options: wire name, column, direction
 │       │   │       └── dto/                           # HotelResult, SearchResponse
 │       │   └── resources/
 │       │       ├── application.yml
@@ -108,12 +112,13 @@ apps/
 │       │           ├── V1__create_search_schema.sql
 │       │           └── V2__seed_sample_data.sql
 │       └── test/java/com/tripdesk/api/
-│           ├── support/                # Testcontainers base class, fixed clock, fixture loader
-│           ├── search/                 # validator unit tests, search integration tests
+│           ├── support/                # Testcontainers base class, fixed clock, fixture loader, schema and seed tests
+│           ├── search/                 # validator, cursor and error-shape unit tests, search integration tests
 │           └── contract/               # OpenAPI snapshot test
 └── web/                                # Next.js App Router + TypeScript, pnpm
     ├── package.json
-    ├── next.config.ts                  # rewrites /api/* to the API (browser calls, no CORS)
+    ├── next.config.ts                  # rewrites /api/* to the API (browser calls, no CORS); API_BASE_URL defaults to http://localhost:8080
+    ├── .env.example                    # API_BASE_URL
     ├── playwright.config.ts
     ├── vitest.config.ts
     ├── public/images/hotels/           # Static sample hotel images
@@ -138,15 +143,16 @@ apps/
         ├── lib/
         │   ├── api/
         │   │   ├── generated/          # Generated client/types (committed; never hand-edited)
-        │   │   └── client.ts           # base URL selection (server vs browser)
+        │   │   └── client.ts           # base URL selection (server: API_BASE_URL, default http://localhost:8080, with cache: 'no-store'; browser: same-origin /api)
         │   ├── search-params.ts        # URL params <-> criteria/filters/sort
         │   ├── validate-criteria.ts    # client-side checks (required fields, check-out after check-in)
         │   ├── load-search.ts          # calls the API and returns a search state (results, empty, no-city, error, unavailable, idle)
         │   ├── money.ts                # price formatting, dollars to cents
         │   └── error-messages.ts       # API error code -> user-facing message
         └── tests/
+            ├── setup.ts                # Vitest setup (jest-dom matchers)
             ├── unit/                   # Vitest
-            └── e2e/                    # Playwright
+            └── e2e/                    # Playwright: search.spec.ts (real stack), unavailable.spec.ts (own server, dead API)
 ```
 
 **Structure Decision**: Monorepo with two independent apps under `apps/` and local infrastructure under `infra/`, as requested. No root-level JavaScript workspace is created because there is a single JavaScript package; one can be added when a second appears. The Gradle build is also a single project for the same reason.
@@ -179,7 +185,7 @@ Decided by the project owner: keep `cacheComponents: true` and `partialPrefetchi
 
 - Endpoint: `GET /api/v1/hotels/search` with query params `city`, `checkIn`, `checkOut`, `guests`, `minPrice`, `maxPrice`, `minStars`, `sort`, `cursor`. Page size is fixed at 20 and is not a parameter.
 - Success response: `{ items: [{ id, name, starRating, pricePerNightCents, currency, imageUrl }], nextCursor }`. `nextCursor` is `null` on the last page.
-- Error response: `application/problem+json` (Spring `ProblemDetail`) with `code` and an `errors` array of `{ field, code, meta }`, so several violations are reported in one response. Codes: `REQUIRED` (missing or blank), `INVALID_VALUE` (wrong format, for example an impossible date or a non-numeric number), `INVALID_DATE_RANGE`, `CHECK_IN_IN_PAST`, `GUESTS_OUT_OF_RANGE`, `INVALID_PRICE_RANGE`, `INVALID_STARS`, `INVALID_SORT`, `INVALID_CURSOR`, `CITY_NOT_FOUND`. Validation failures return HTTP 400; `CITY_NOT_FOUND` returns 404. No search query runs when validation fails. The top-level `code` repeats the `code` of the first entry in `errors`; there is no separate aggregate code. A `guests` value that is a well-formed integer beyond the 32-bit integer range (for example `99999999999`) returns `GUESTS_OUT_OF_RANGE`, not `INVALID_VALUE`. A date with a year outside 1 to 9999 returns `INVALID_VALUE`, because the database cannot hold it. A blank `cursor` is treated as absent (the first page).
+- Error response: `application/problem+json` (Spring `ProblemDetail`) with `code` and an `errors` array of `{ field, code, meta }`, so several violations are reported in one response. Codes: `REQUIRED` (missing or blank), `INVALID_VALUE` (wrong format, for example an impossible date or a non-numeric number), `INVALID_DATE_RANGE`, `CHECK_IN_IN_PAST`, `GUESTS_OUT_OF_RANGE`, `INVALID_PRICE_RANGE`, `INVALID_STARS`, `INVALID_SORT`, `INVALID_CURSOR`, `CITY_NOT_FOUND`. Validation failures return HTTP 400; `CITY_NOT_FOUND` returns 404. No search query runs when validation fails. The top-level `code` repeats the `code` of the first entry in `errors`; there is no separate aggregate code. The `title` is "Validation failed" for 400 and "City not found" for 404. Every entry in `errors` carries `meta`, an empty object when there is no extra data, although the OpenAPI schema does not list it as required. The response also carries `instance` (the request path), which the OpenAPI schema does not list. A `guests` value that is a well-formed integer beyond the 32-bit integer range (for example `99999999999`) returns `GUESTS_OUT_OF_RANGE`, not `INVALID_VALUE`. A date with a year outside 1 to 9999 returns `INVALID_VALUE`, because the database cannot hold it. A blank `cursor` is treated as absent (the first page).
 - Keyset pagination: ordered by the chosen sort column then hotel id. The opaque cursor holds the last row's sort value, its id and the sort it belongs to; a cursor used with a different sort is rejected as `INVALID_CURSOR`. A cursor is valid only with unchanged criteria, filters and sort; the server does not check the criteria or filters, so the result is undefined if they changed. Binding them into the cursor (rejecting a mismatch) is deferred until a second client exists.
 - Full detail in [contracts/search-api.openapi.yaml](contracts/search-api.openapi.yaml).
 
@@ -188,19 +194,19 @@ Decided by the project owner: keep `cacheComponents: true` and `partialPrefetchi
 - Tables: `city`, `hotel`, `hotel_unavailability` (see [data-model.md](data-model.md)).
 - A hotel is returned when its city matches, `max_guests >= guests`, and no `hotel_unavailability` row overlaps the stay `[checkIn, checkOut)`.
 - Indexes: unique on lower-cased city name; `hotel (city_id, price_per_night_cents, id)` for price sort and cursor; `hotel (city_id, star_rating, id)` for star sort and cursor; `hotel_unavailability (hotel_id, start_date, end_date)` for the availability check.
-- At about 250 rows the planner may still choose sequential scans; the indexes establish the correct access pattern for later growth and are verified with `EXPLAIN` during implementation (quickstart step).
+- At about 250 rows the planner may still choose sequential scans; the indexes establish the correct access pattern for later growth. Verified with `EXPLAIN (ANALYZE)` in T055 ([performance-baseline.md](performance-baseline.md)): the default and stars sorts use the price and stars indexes; a filtered search and the availability check use sequential scans at this size.
 - Seed: V2 inserts 5 cities and about 50 deterministic hotels per city (no random values) with a spread of stars, prices and `max_guests` capacities (1 to 10, so the guest filter visibly changes results, and every city has hotels that fit 10 guests), and unavailable ranges for a share of hotels. One city has every hotel unavailable in a fixed far-future window, which gives a stable "no availability" case for end-to-end tests.
 
 ### Contract
 
-- springdoc generates the OpenAPI document from controller and DTO code. A snapshot test fetches the document from the running (Testcontainers-backed) application and compares it with the committed `apps/api/openapi/openapi.json`; the test fails if they differ, and a documented Gradle task refreshes the snapshot.
+- springdoc generates the OpenAPI document (version 3.1.0) from controller and DTO code. A snapshot test fetches the document from the running (Testcontainers-backed) application and compares it with the committed `apps/api/openapi/openapi.json`; the test fails if they differ, and a documented Gradle task refreshes the snapshot.
 - The frontend client is generated from that snapshot with a `pnpm` script. Generated output is committed and never edited by hand. The generator is `openapi-typescript` with `openapi-fetch` ([research.md](research.md) R1).
 
 ### Testing
 
 - Backend integration tests use a real PostgreSQL (Testcontainers) with the Flyway schema. Tests clear the seed tables and insert their own fixtures with a fixed clock, so they do not depend on the sample data aging.
 - Frontend component tests cover every error/empty-state message, filter/sort URL updates and load-more appending, with the generated client mocked at the module boundary.
-- One Playwright test runs the full flow against the real API and seeded database: search, see results, filter, sort, load more.
+- Playwright runs the full flows against the real API and seeded database (`search.spec.ts`): search, see results, filter, sort, load more, the edge-case states and the loading placeholder. `unavailable.spec.ts` starts a second production server whose `API_BASE_URL` points at a closed port, to check the unavailable message and that the form stays usable (the server-side fetch cannot be intercepted from the browser).
 
 #### Test coverage map
 

@@ -1,7 +1,10 @@
 # Design-time draft of the search API contract.
 # Source of truth after implementation: the OpenAPI document generated from the backend code
 # (committed as apps/api/openapi/openapi.json). If they differ, update this draft or the spec.
-openapi: 3.0.3
+# Reconciled with that document in T059 (2026-10-30): springdoc emits OpenAPI 3.1, so this draft
+# uses 3.1 too. Known remaining difference: the generated document adds an operation tag and does
+# not list the `instance` field that error responses carry (the request path).
+openapi: 3.1.0
 info:
   title: TripDesk API
   version: 0.1.0
@@ -56,8 +59,7 @@ components:
           maxItems: 20
           items: { $ref: "#/components/schemas/HotelResult" }
         nextCursor:
-          type: string
-          nullable: true
+          type: [string, "null"]
           description: Null when there are no more results
     HotelResult:
       type: object
@@ -65,8 +67,8 @@ components:
       properties:
         id: { type: integer, format: int64 }
         name: { type: string }
-        starRating: { type: integer, minimum: 1, maximum: 5 }
-        pricePerNightCents: { type: integer }
+        starRating: { type: integer, format: int32, minimum: 1, maximum: 5 }
+        pricePerNightCents: { type: integer, format: int32 }
         currency: { type: string, example: USD }
         imageUrl: { type: string, description: Path of a static image served by the web app }
     Problem:
@@ -74,11 +76,22 @@ components:
       required: [title, status, code, errors]
       properties:
         type: { type: string }
-        title: { type: string }
-        status: { type: integer }
+        title: { type: string, description: "\"Validation failed\" for 400, \"City not found\" for 404" }
+        status: { type: integer, format: int32 }
         detail: { type: string }
         code:
           type: string
+          enum: &errorCodes
+            - REQUIRED
+            - INVALID_VALUE
+            - INVALID_DATE_RANGE
+            - CHECK_IN_IN_PAST
+            - GUESTS_OUT_OF_RANGE
+            - INVALID_PRICE_RANGE
+            - INVALID_STARS
+            - INVALID_SORT
+            - INVALID_CURSOR
+            - CITY_NOT_FOUND
           description: Repeats the code of the first entry in errors (there is no aggregate code)
         errors:
           type: array
@@ -90,18 +103,8 @@ components:
         field: { type: string, example: guests }
         code:
           type: string
-          enum:
-            - REQUIRED
-            - INVALID_VALUE
-            - INVALID_DATE_RANGE
-            - CHECK_IN_IN_PAST
-            - GUESTS_OUT_OF_RANGE
-            - INVALID_PRICE_RANGE
-            - INVALID_STARS
-            - INVALID_SORT
-            - INVALID_CURSOR
-            - CITY_NOT_FOUND
+          enum: *errorCodes
         meta:
           type: object
           additionalProperties: true
-          description: "Extra values for the message, e.g. { min: 1, max: 10 } for GUESTS_OUT_OF_RANGE"
+          description: "Extra values for the message, e.g. { min: 1, max: 10 } for GUESTS_OUT_OF_RANGE. The schema does not list it as required, but the server always returns it, as an empty object when there is no extra data."
