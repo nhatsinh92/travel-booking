@@ -139,7 +139,7 @@ Added after the T027–T039 code review, on the project owner's decisions. They re
 
 - [X] T039k [P] [US1] Test first (logic): extend `load-search.test.ts`: when `loadSearch` returns `unavailable` it first logs with `console.error`, the caught error for a failed request and the status code for an unexpected response; the handled states (results, empty, no-city, validation errors) log nothing. Found by the second code review. Covers: EC10, FR-017. Then: T039l
 - [X] T039l [US1] Log the failure in `apps/web/src/lib/load-search.ts` before returning `unavailable`; make T039k pass
-- [ ] T039m [US1] Move the state-to-component switch out of `Results` in `search/page.tsx` into `apps/web/src/components/ResultsView.tsx`, tested with code in `apps/web/src/tests/unit/ResultsView.test.tsx` for every state. "The form stays usable" (FR-017) holds by structure, because the form sits outside the results boundary; it was checked by hand with the API stopped (2026-10-30), not by an automated test (Playwright cannot intercept the server-side fetch and this plan has no `webServer`). Covers: EC10, FR-017; depends on T039l
+- [X] T039m [US1] Move the state-to-component switch out of `Results` in `search/page.tsx` into `apps/web/src/components/ResultsView.tsx`, tested with code in `apps/web/src/tests/unit/ResultsView.test.tsx` for every state. "The form stays usable" (FR-017) holds by structure, because the form sits outside the results boundary; it was checked by hand with the API stopped (2026-10-30), not by an automated test (Playwright cannot intercept the server-side fetch and this plan has no `webServer`). Covers: EC10, FR-017; depends on T039l
 
 **Checkpoint**: User Story 1 is fully functional and testable on its own (MVP).
 
