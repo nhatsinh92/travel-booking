@@ -12,14 +12,13 @@ type Props = {
 export default function ResultsList({ items, nextCursor, searchParams }: Props) {
   return (
     <div className={styles.results}>
-      <ul className={styles.list}>
+      <LoadMore nextCursor={nextCursor} searchParams={searchParams}>
         {items.map((hotel) => (
           <li key={hotel.id}>
             <HotelCard hotel={hotel} />
           </li>
         ))}
-      </ul>
-      <LoadMore nextCursor={nextCursor} searchParams={searchParams} />
+      </LoadMore>
     </div>
   );
 }

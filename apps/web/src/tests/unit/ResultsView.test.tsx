@@ -19,23 +19,23 @@ const hotel = (id: number) => ({
 
 describe('ResultsView', () => {
   it('shows the hint for idle', () => {
-    render(<ResultsView state={{ status: 'idle' }} />);
+    render(<ResultsView state={{ status: 'idle' }} searchParams={{}} />);
     expect(screen.getByText(/enter a city/i)).toBeInTheDocument();
   });
 
   it('shows one card per hotel for results (US1-AS1)', () => {
-    render(<ResultsView state={{ status: 'results', items: [hotel(1), hotel(2)], nextCursor: null }} />);
+    render(<ResultsView state={{ status: 'results', items: [hotel(1), hotel(2)], nextCursor: null }} searchParams={{}} />);
     expect(screen.getAllByRole('article')).toHaveLength(2);
     expect(screen.getByRole('heading', { name: 'Hotel 2' })).toBeInTheDocument();
   });
 
   it('suggests different dates or fewer guests for empty (EC5)', () => {
-    render(<ResultsView state={{ status: 'empty' }} />);
+    render(<ResultsView state={{ status: 'empty' }} searchParams={{}} />);
     expect(screen.getByText(/different dates/i)).toBeInTheDocument();
   });
 
   it('shows the no-matching-city message for no-city (EC4)', () => {
-    render(<ResultsView state={{ status: 'no-city' }} />);
+    render(<ResultsView state={{ status: 'no-city' }} searchParams={{}} />);
     expect(screen.getByRole('alert')).toHaveTextContent(/no matching city/i);
   });
 
@@ -49,6 +49,7 @@ describe('ResultsView', () => {
             { field: 'guests', code: 'GUESTS_OUT_OF_RANGE', meta: { min: 1, max: 10 } },
           ],
         }}
+        searchParams={{}}
       />,
     );
     expect(screen.getAllByRole('listitem')).toHaveLength(2);
@@ -56,13 +57,13 @@ describe('ResultsView', () => {
   });
 
   it('tells the user to try again for unavailable (EC10, FR-017)', () => {
-    render(<ResultsView state={{ status: 'unavailable' }} />);
+    render(<ResultsView state={{ status: 'unavailable' }} searchParams={{}} />);
     expect(screen.getByRole('alert')).toHaveTextContent(/unavailable/i);
     expect(screen.getByRole('alert')).toHaveTextContent(/try again/i);
   });
 
   it('shows the clear-filters state for no-filter-match (EC6, FR-009)', () => {
-    render(<ResultsView state={{ status: 'no-filter-match' }} />);
+    render(<ResultsView state={{ status: 'no-filter-match' }} searchParams={{}} />);
     expect(screen.getByText(/no hotels match these filters/i)).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Clear filters' })).toBeInTheDocument();
   });

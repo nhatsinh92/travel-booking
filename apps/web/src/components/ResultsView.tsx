@@ -10,10 +10,10 @@ import type { SearchState } from '@/lib/load-search';
 type Props = {
   state: SearchState;
   // The URL's search params, for LoadMore to repeat the search with the same filters and sort.
-  searchParams?: Record<string, string | string[] | undefined>;
+  searchParams: Record<string, string | string[] | undefined>;
 };
 
-export default function ResultsView({ state, searchParams = {} }: Props) {
+export default function ResultsView({ state, searchParams }: Props) {
   switch (state.status) {
     case 'idle':
       return <SearchHint />;

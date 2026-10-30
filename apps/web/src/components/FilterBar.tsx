@@ -36,15 +36,16 @@ export default function FilterBar() {
   // Filters need a search to apply to.
   if (!hasSearch(searchParams)) return null;
 
-  function apply(changes: Partial<SearchFilters>) {
-    const next = { ...applied, ...changes };
+  // Every change also applies the prices typed so far, so a select change does not lose them.
+  function apply(changes: Partial<SearchFilters> = {}) {
+    const next = { ...applied, minPrice, maxPrice, ...changes };
     setApplied(next);
     router.push(updateFilters(searchParams, next));
   }
 
   function applyPrices() {
     if (minPrice === applied.minPrice && maxPrice === applied.maxPrice) return;
-    apply({ minPrice, maxPrice });
+    apply();
   }
 
   function submit(event: FormEvent<HTMLFormElement>) {
