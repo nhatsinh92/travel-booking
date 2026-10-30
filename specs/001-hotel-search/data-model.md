@@ -64,14 +64,14 @@ A stay `[checkIn, checkOut)` conflicts when `start_date < checkOut AND end_date 
 | Rule | Error code | HTTP | Spec |
 |------|-----------|------|------|
 | `city`, `checkIn`, `checkOut` or `guests` missing or blank | `REQUIRED` | 400 | FR-012 |
-| any supplied value in the wrong format (impossible or unparseable date, non-numeric `guests`, `minPrice`, `maxPrice` or `minStars`); the error names the field | `INVALID_VALUE` | 400 | FR-015 |
+| any supplied value in the wrong format (impossible or unparseable date, non-numeric `guests`, `minPrice`, `maxPrice` or `minStars`); the error names the field. A date with a year outside 1 to 9999 is also `INVALID_VALUE` | `INVALID_VALUE` | 400 | FR-015 |
 | `checkOut` on or before `checkIn` | `INVALID_DATE_RANGE` | 400 | FR-003 |
 | `checkIn` before today (server clock, configured zone) | `CHECK_IN_IN_PAST` | 400 | FR-004 |
-| `guests` below 1 or above the configured maximum (10); `meta` carries `min` and `max` | `GUESTS_OUT_OF_RANGE` | 400 | FR-005 |
+| `guests` below 1 or above the configured maximum (10), including a well-formed integer beyond the 32-bit integer range (for example `99999999999`); `meta` carries `min` and `max` | `GUESTS_OUT_OF_RANGE` | 400 | FR-005 |
 | `minPrice` greater than `maxPrice` | `INVALID_PRICE_RANGE` | 400 | FR-014 |
 | `minStars` outside 1 to 5 | `INVALID_STARS` | 400 | FR-008 |
 | unknown `sort` value | `INVALID_SORT` | 400 | FR-010 |
-| malformed or mismatched `cursor` | `INVALID_CURSOR` | 400 | FR-011 |
+| malformed or mismatched `cursor` (a blank `cursor` is not an error: it is treated as absent, that is, the first page) | `INVALID_CURSOR` | 400 | FR-011 |
 | trimmed city not found | `CITY_NOT_FOUND` | 404 | FR-006 |
 
 There is no maximum stay length (per your constraint). All field-level violations are returned together in `errors`; the response's top-level `code` repeats the first entry's code (there is no aggregate code). `CITY_NOT_FOUND` is only evaluated when the other input is valid. No search query runs on any error.
