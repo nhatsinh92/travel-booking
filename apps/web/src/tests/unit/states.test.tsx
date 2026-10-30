@@ -1,11 +1,26 @@
 import { render, screen } from '@testing-library/react';
-import { describe, expect, it } from 'vitest';
+import userEvent from '@testing-library/user-event';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import ErrorMessage from '@/components/states/ErrorMessage';
 import LoadingResults from '@/components/states/LoadingResults';
 import NoAvailability from '@/components/states/NoAvailability';
 import NoCity from '@/components/states/NoCity';
+import NoFilterMatch from '@/components/states/NoFilterMatch';
 import SearchHint from '@/components/states/SearchHint';
 import Unavailable from '@/components/states/Unavailable';
+
+const push = vi.fn();
+const useSearchParams = vi.fn();
+vi.mock('next/navigation', () => ({
+  useRouter: () => ({ push }),
+  useSearchParams: () => useSearchParams(),
+}));
+
+beforeEach(() => {
+  push.mockReset();
+  useSearchParams.mockReset();
+  useSearchParams.mockReturnValue(new URLSearchParams(''));
+});
 
 describe('ErrorMessage', () => {
   it('shows the message for an invalid date range (EC1)', () => {
@@ -82,5 +97,27 @@ describe('SearchHint', () => {
   it('asks for a city, dates and guests', () => {
     render(<SearchHint />);
     expect(screen.getByText(/city.*dates.*guests/i)).toBeInTheDocument();
+  });
+});
+
+describe('NoFilterMatch (EC6, FR-009)', () => {
+  const criteria = 'city=Hanoi&checkIn=2026-12-01&checkOut=2026-12-03&guests=2';
+
+  it('says no hotel matches the filters and offers to clear them', () => {
+    render(<NoFilterMatch />);
+    expect(screen.getByText(/no hotels match these filters/i)).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Clear filters' })).toBeInTheDocument();
+  });
+
+  it('removes the filters and the sort from the URL and keeps the search criteria', async () => {
+    useSearchParams.mockReturnValue(
+      new URLSearchParams(`${criteria}&minPrice=10000&minStars=5&sort=stars_desc`),
+    );
+    render(<NoFilterMatch />);
+
+    await userEvent.click(screen.getByRole('button', { name: 'Clear filters' }));
+
+    expect(push).toHaveBeenCalledTimes(1);
+    expect(push).toHaveBeenCalledWith(`/search?${criteria}`);
   });
 });
