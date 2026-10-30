@@ -38,9 +38,18 @@ test.describe('hotel search', () => {
     await page.addInitScript(() => {
       const w = window as unknown as { __loadingSeen: boolean };
       w.__loadingSeen = false;
-      const check = () => {
-        for (const el of document.querySelectorAll('[role="status"]')) {
-          if (el.textContent?.trim() === 'Loading results') w.__loadingSeen = true;
+      const isPlaceholder = (el: Element) =>
+        el.getAttribute('role') === 'status' && el.textContent?.trim() === 'Loading results';
+      // Looks at the nodes each mutation added, so a placeholder that is added and removed
+      // before the callback runs is still recorded.
+      const check = (mutations: MutationRecord[]) => {
+        for (const mutation of mutations) {
+          for (const node of mutation.addedNodes) {
+            if (!(node instanceof Element)) continue;
+            if (isPlaceholder(node) || [...node.querySelectorAll('[role="status"]')].some(isPlaceholder)) {
+              w.__loadingSeen = true;
+            }
+          }
         }
       };
       new MutationObserver(check).observe(document, { subtree: true, childList: true });
@@ -67,18 +76,25 @@ test.describe('hotel search', () => {
       .toBe(true);
   });
 
-  test('replaces the results and the URL when the dates change (US1-AS2)', async ({ page }) => {
-    await fillAndSearch(page, { city: 'Hanoi', checkIn, checkOut, guests: '2' });
+  test('replaces the results and the URL when the search changes (US1-AS2)', async ({ page }) => {
+    // The second search changes the dates and also asks for 10 guests, which the seeded
+    // capacities turn into a different set of hotels, so replaced results are visible.
+    await fillAndSearch(page, { city: 'Hanoi', checkIn, checkOut, guests: '1' });
     await expect(hotelCards(page).first()).toBeVisible();
     await expect(page).toHaveURL(new RegExp(`checkIn=${checkIn}`));
+    const before = await hotelCards(page).getByRole('heading').allTextContents();
 
     const newCheckIn = isoDate(60);
     const newCheckOut = isoDate(63);
     await page.getByLabel('Check-in').fill(newCheckIn);
     await page.getByLabel('Check-out').fill(newCheckOut);
+    await page.getByLabel('Guests').fill('10');
     await page.getByRole('button', { name: 'Search' }).click();
 
     await expect(page).toHaveURL(new RegExp(`checkIn=${newCheckIn}&checkOut=${newCheckOut}`));
+    await expect
+      .poll(async () => hotelCards(page).getByRole('heading').allTextContents())
+      .not.toEqual(before);
     await expect(hotelCards(page).first()).toBeVisible();
     await expect(page.getByLabel('Check-in')).toHaveValue(newCheckIn);
   });

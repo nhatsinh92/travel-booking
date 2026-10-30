@@ -14,7 +14,9 @@ import styles from './page.module.css';
 type SearchParams = Promise<Record<string, string | string[] | undefined>>;
 
 // The shell does not read searchParams; they are awaited only inside the Suspense boundary, so
-// the form and the loading placeholder can be prerendered (plan.md, Cache Components decision).
+// the heading and the loading placeholder are prerendered (plan.md, Cache Components decision).
+// The form is not: KeyedBySearchParams suspends on useSearchParams() with a null fallback, so
+// the form appears once the stream and hydration reach it.
 export default function SearchPage({ searchParams }: { searchParams: SearchParams }) {
   return (
     <main className={styles.page}>
