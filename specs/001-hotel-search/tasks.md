@@ -242,14 +242,14 @@ $api  = 'http://localhost:8080/api/v1/hotels/search'
 $in   = (Get-Date).AddDays(30).ToString('yyyy-MM-dd')
 $out  = (Get-Date).AddDays(32).ToString('yyyy-MM-dd')
 $base = "city=Hanoi&checkIn=$in&checkOut=$out&guests=2"
-$page1 = Invoke-RestMethod -Uri "$api?$base"
+$page1 = Invoke-RestMethod -Uri "${api}?$base"
 "A returns $($page1.items.Count) items; nextCursor present: $($null -ne $page1.nextCursor)"
 $cursor = [uri]::EscapeDataString($page1.nextCursor)
 
 $results = @(
-    Measure-Endpoint 'A search, default sort'    "$api?$base"
-    Measure-Endpoint 'B filters + stars sort'    "$api?$base&minStars=3&maxPrice=30000&sort=stars_desc"
-    Measure-Endpoint 'C load more (page 2)'      "$api?$base&cursor=$cursor"
+    Measure-Endpoint 'A search, default sort'    "${api}?$base"
+    Measure-Endpoint 'B filters + stars sort'    "${api}?$base&minStars=3&maxPrice=30000&sort=stars_desc"
+    Measure-Endpoint 'C load more (page 2)'      "${api}?$base&cursor=$cursor"
     Measure-Endpoint 'D web page, server render' "http://localhost:3000/search?$base" -Html
 )
 $results | Format-Table -AutoSize
