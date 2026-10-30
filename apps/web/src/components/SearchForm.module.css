@@ -1,0 +1,28 @@
+.form {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: flex-end;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 0.9rem;
+}
+
+.field input {
+  padding: 8px;
+  border: 1px solid #98a2b3;
+  border-radius: 6px;
+}
+
+.submit {
+  padding: 9px 18px;
+  border: 0;
+  border-radius: 6px;
+  background: #1d4ed8;
+  color: #fff;
+  cursor: pointer;
+}
