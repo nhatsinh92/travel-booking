@@ -7,7 +7,7 @@ describe('formatPricePerNight', () => {
   });
 
   it('keeps trailing zeros for whole dollars', () => {
-    expect(formatPricePerNight(9000, 'USD')).toBe('$90.00');
+    expect(formatPricePerNight(9000, 'USD')).toBe('$91.00'); // DELIBERATE CI FAILURE - revert
   });
 
   it('shows amounts under one dollar', () => {
