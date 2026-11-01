@@ -9,7 +9,12 @@ budget is near zero.
 ### I. Spec-First
 Code MUST NOT be written without a spec under `specs/`. At merge time the spec MUST describe the
 implemented behavior.
+Exception: tooling and infrastructure changes (CI workflows, build and dependency configuration,
+developer scripts) that add no user-facing behavior MAY skip a spec under `specs/`. Such a change
+MUST be described in its pull request: what changes, why, and how it was verified.
 Rationale: the spec stays the trustworthy description of the system, for the developer and the AI.
+A spec adds no value where there is no user-facing behavior to describe, but the change must still
+be reviewable.
 
 ### II. Contract-First
 The backend OpenAPI document MUST be the single source of truth for the API. The frontend MUST use
@@ -47,4 +52,4 @@ Rationale: AI-generated changes stay reviewable, and hidden guesses become visib
   MINOR for adding a principle or materially expanding guidance, PATCH for clarifications.
 - A justified deviation from a principle MAY be recorded in the plan's Complexity Tracking table.
 
-**Version**: 1.1.0 | **Ratified**: 2026-10-29 | **Last Amended**: 2026-10-29
+**Version**: 1.2.0 | **Ratified**: 2026-10-29 | **Last Amended**: 2026-11-01
